@@ -44,7 +44,7 @@ fun buildVoiceDictationController(
     sendToPane = { paneId, bytes -> cockpit.activePanes().getOrNull(paneId)?.submitCommand(bytes) },
     focusedPaneIdProvider = focusedPaneId,
     autoSubmitProvider = { GhosttySettingsStore.voiceAutoSubmit.value },
-    isProProvider = { GeminiKeyStore.get() != null },
+    hasKeyProvider = { GeminiKeyStore.get() != null },
 )
 
 /**

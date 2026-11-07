@@ -23,10 +23,7 @@ private const val TAG = "LiveDictation"
  * (same rules as [VoiceMessages.normalizeTranscript]) and routed through the focused pane's
  * `submitCommand` — the existing path for already-UTF-8 text — rather than synthesizing keystrokes.
  *
- * Injection discipline (pane routing + settings + entitlement as lambdas) keeps focus
- * clamping, auto-submit newline, and the Pro gate unit-tested with fakes and no emulator. The
- * Firebase-touching subscription (collecting the session's transcription flow) lives in the
- * wiring layer; this class only accumulates text and inserts it.
+ * Injection keeps pane routing, auto-submit and missing-key handling testable without an emulator.
  */
 class LiveDictationController(
     private val scope: CoroutineScope,
@@ -34,7 +31,7 @@ class LiveDictationController(
     private val sendToPane: (paneId: Int, bytes: ByteArray) -> Unit,
     private val focusedPaneIdProvider: () -> Int,
     private val autoSubmitProvider: () -> Boolean,
-    private val isProProvider: () -> Boolean,
+    private val hasKeyProvider: () -> Boolean,
 ) {
     /**
      * Shared Live microphone lifecycle. MainActivity binds this after constructing the session;
@@ -64,8 +61,8 @@ class LiveDictationController(
 
     fun start() {
         if (_state.value is LiveDictationState.Accumulating) return
-        if (!isProProvider()) {
-            _state.value = LiveDictationState.Error(VoiceMessages.PRO_REQUIRED_MESSAGE)
+        if (!hasKeyProvider()) {
+            _state.value = LiveDictationState.Error(VoiceMessages.KEY_REQUIRED_MESSAGE)
             return
         }
         transcript.clear()
@@ -96,8 +93,8 @@ class LiveDictationController(
         if (_state.value !is LiveDictationState.Accumulating) return
         active = false
         inputLifecycle.endInput()
-        if (!isProProvider()) {
-            _state.value = LiveDictationState.Error(VoiceMessages.PRO_REQUIRED_MESSAGE)
+        if (!hasKeyProvider()) {
+            _state.value = LiveDictationState.Error(VoiceMessages.KEY_REQUIRED_MESSAGE)
             return
         }
         val text = VoiceMessages.normalizeTranscript(transcript.toString())

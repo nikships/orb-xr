@@ -6,8 +6,8 @@ package com.ghosttyxr.app.terminal.voice
  * and newline-collapsing rules are shared without depending on deleted code.
  */
 object VoiceMessages {
-    /** Shown when a free-tier user taps a voice affordance. */
-    const val PRO_REQUIRED_MESSAGE = "Add your Gemini API key in Settings → Voice."
+    /** Shown when a voice affordance is used without a key. */
+    const val KEY_REQUIRED_MESSAGE = "Add your Gemini API key in Settings → Voice."
 
     /**
      * Shown when a turn ends with no usable speech (empty buffer or blank transcript).

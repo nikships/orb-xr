@@ -13,14 +13,14 @@ class LiveDictationControllerTest {
     private fun controller(
         paneCount: Int = 2,
         autoSubmit: Boolean = false,
-        isPro: Boolean = true,
+        hasKey: Boolean = true,
     ) = LiveDictationController(
         scope = CoroutineScope(Dispatchers.Unconfined),
         paneCount = { paneCount },
         sendToPane = { paneId, bytes -> sent += paneId to bytes.toString(Charsets.UTF_8) },
         focusedPaneIdProvider = { 5 },
         autoSubmitProvider = { autoSubmit },
-        isProProvider = { isPro },
+        hasKeyProvider = { hasKey },
     )
 
     private class FakeInputLifecycle : LiveInputLifecycle {
@@ -89,8 +89,8 @@ class LiveDictationControllerTest {
     }
 
     @Test
-    fun `free tier cannot start`() {
-        val controller = controller(isPro = false)
+    fun `missing key cannot start`() {
+        val controller = controller(hasKey = false)
         controller.toggle()
         val state = controller.state.value
         assertTrue(state is LiveDictationState.Error)
