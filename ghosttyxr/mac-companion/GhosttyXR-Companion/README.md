@@ -50,8 +50,7 @@ open build/Build/Products/Debug/GhosttyXRCompanion.app
 ### Release (signed + notarized) — preferred for real testing
 
 End users download `OrbXR-arm64.zip` (contains `Orb XR.app`) from
-[GitHub Releases](https://github.com/anand-92/ghostty-vibe-xr/releases). CI ships
-on push to `main` under `ghosttyxr/mac-companion/**`.
+[GitHub Releases](https://github.com/nikships/orb-xr/releases).
 
 ```bash
 cd ghosttyxr/mac-companion/GhosttyXR-Companion

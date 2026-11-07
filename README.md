@@ -1,16 +1,71 @@
 # Orb XR
 
-## Download
+## Download and install
 
-Get the Android XR headset APK and the signed, notarized Mac companion from
-[GitHub Releases](https://github.com/nikships/orb-xr/releases).
-The APK is a release-mode, **debug-signed sideload build**, not a Play
-Store release. It cannot update an installation signed with a different key.
-Voice uses your own Gemini API key and connects directly to Google's Gemini API.
-Add or remove the key in Settings → Voice. It is stored using Android's
-encrypted preferences. Audio and any terminal context requested by voice tools
-are sent to Gemini under your account; Google's terms and charges apply.
-The app does not require an Orb XR subscription or Firebase project.
+**Latest release: [Orb XR 0.1.15](https://github.com/nikships/orb-xr/releases/tag/v0.1.15)**
+
+| Device | Download | Requirements |
+|---|---|---|
+| Mac | [Download Orb XR for macOS](https://github.com/nikships/orb-xr/releases/download/v0.1.15/OrbXR-arm64.zip) | Apple silicon, macOS 14 or later. Signed with Developer ID and notarized by Apple. |
+| Headset | [Download the Android XR APK](https://github.com/nikships/orb-xr/releases/download/v0.1.15/orb-xr-0.1.15-sideload.apk) | Samsung Galaxy XR or another compatible arm64 Android XR headset. |
+
+Checksums and third-party notices are available on the
+[release page](https://github.com/nikships/orb-xr/releases/tag/v0.1.15).
+
+### 1. Set up the Mac
+
+1. Download and unzip `OrbXR-arm64.zip`, move **Orb XR.app** to Applications,
+   and open it.
+2. Follow the companion's setup. Enable **Remote Login** in System Settings →
+   General → Sharing and allow your Mac user account. The app can open the
+   settings page for you.
+3. Install `tmux` when prompted. The companion can guide you through installing
+   Homebrew and `tmux` if needed. Keep the Mac and headset on the same local
+   network.
+4. Enter and confirm your Mac login password in the companion, then leave its
+   pairing QR code visible.
+
+> **Keep the pairing QR private.** The current companion encodes your Mac login
+> password in the QR for initial SSH pairing. Anyone who can read the QR can
+> recover that password. Don't share screenshots or show it in a public place.
+
+### 2. Install the headset app
+
+1. Download the APK to the Mac. Download
+   [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools)
+   for Mac and unzip it in Downloads, creating `~/Downloads/platform-tools`.
+2. Enable developer options and USB debugging on the headset. Connect it to the
+   Mac with a USB data cable and approve the debugging prompt in the headset.
+3. In Terminal, check that the headset is listed as `device`:
+
+   ```bash
+   "$HOME/Downloads/platform-tools/adb" devices
+   ```
+
+   Then install the downloaded APK:
+
+   ```bash
+   "$HOME/Downloads/platform-tools/adb" install -r "$HOME/Downloads/orb-xr-0.1.15-sideload.apk"
+   ```
+
+4. Open **Orb XR** on the headset, grant the requested permissions, and scan the
+   QR shown by the Mac companion. Follow the in-app setup to enter the cockpit.
+   Grant macOS Accessibility and Screen Recording permissions when prompted if
+   you want keyboard relay or window mirroring.
+
+The APK is **debug-signed for sideloading**, not Play-signed. Android will not
+install it over an existing copy signed with a different key. Removing an
+existing app can also remove its local data.
+
+### 3. Optional: enable voice
+
+Voice is bring-your-own-key. Create a Gemini API key in
+[Google AI Studio](https://aistudio.google.com/api-keys), then enter it in
+**Settings → Voice** on the headset. The key is stored in encrypted Android
+preferences. Voice audio and terminal context requested by voice tools are sent
+directly to Gemini under your account; Google's terms and charges apply.
+The terminal cockpit works without a key. No Orb XR subscription or Firebase
+project is required.
 
 This public repository starts from a clean source snapshot. The earlier private
 repository and its history are not published.
