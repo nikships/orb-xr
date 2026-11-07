@@ -33,16 +33,9 @@ Prebuilt `libghosttyxr.so` is checked into `app/src/main/jniLibs/arm64-v8a/`. Ap
 - **AGP 9:** Kotlin is compiled by AGP itself. Apply only `com.android.application` + Compose compiler plugin. No `kotlin-android` plugin, no `kotlinOptions{}`; set JVM target via top-level `kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }`.
 - **SDK:** `compileSdk`/`targetSdk = 37`, `minSdk = 24`, arm64-only (`abiFilters += "arm64-v8a"`). x86 emulators will not run the APK.
 - **Bytecode vs toolchain:** JVM 17 bytecode; Gradle must run on **JDK 21**.
-- **google-services.json:** `app/google-services.json` is checked in and the
-  plugin is guarded by file existence. Removing it still permits compilation,
-  but disables Firebase Auth/App Check/Firestore and Gemini-backed features at
-  runtime; absence is a degraded contributor build, not the shipping setup.
-- **No STT/AI keys in the APK.** Voice runs on-device through the Gemini Live API
-  (`gemini-3.8-live` via Firebase AI Logic): mic audio streams in, model speech + function
-  calls stream back. The old `deepgram.apiKey` local.properties hook and `DeepgramKeyStore`
-  are gone — do not reintroduce them. The old `stt`/`petTts` Cloud Functions, `CloudSttClient`,
-  `PetTtsClient`, `CloudPetSpeechSynthesizer`, `GeminiCommandSession`, `VoiceInputController`,
-  and `AudioCaptureController` are deleted — do not reintroduce them.
+- **BYOK voice:** Users enter their own Gemini key in Settings → Voice. The key
+  is stored in encrypted Android preferences; the Live WebSocket connects
+  directly to Gemini. Never bundle keys or add Firebase or subscription gates.
 - **Release signing:** `release.storeFile` / `storePassword` / `keyAlias` / `keyPassword` from `local.properties`. Missing values fall back to the debug keystore so `assembleRelease` still produces a sideloadable APK.
 - **BuildConfig** is explicitly enabled (AGP 9 does not generate it by default).
 

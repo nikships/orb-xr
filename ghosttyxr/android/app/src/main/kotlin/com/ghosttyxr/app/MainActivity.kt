@@ -48,12 +48,8 @@ import com.ghosttyxr.app.terminal.ssh.PairedMacStore
 import com.ghosttyxr.app.terminal.ssh.SshKey
 import com.ghosttyxr.app.terminal.theme.GhosttyThemeRegistry
 import com.ghosttyxr.app.terminal.theme.GhosttyXRTheme
-import com.ghosttyxr.app.billing.BillingController
-import com.ghosttyxr.app.billing.EntitlementStore
-import com.ghosttyxr.app.billing.FirebaseGate
-import com.ghosttyxr.app.billing.OnboardingAccessClient
-import com.ghosttyxr.app.billing.VerifyPurchaseClient
 import com.ghosttyxr.app.terminal.voice.command.LiveCommandSession
+import com.ghosttyxr.app.terminal.voice.GeminiKeyStore
 import com.ghosttyxr.app.terminal.voice.command.LiveDictationController
 import com.ghosttyxr.app.terminal.voice.command.LiveInputLifecycle
 import com.ghosttyxr.app.terminal.voice.command.VoiceCommandController
@@ -86,20 +82,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var onboardingNarration: OnboardingNarrationPlayer
     private lateinit var terminalHandoffController: TerminalHandoffController
     private val controllerScroll = AnalogScrollAccumulator()
-
-    // Pro subscription purchase/restore. Lazy so construction happens after onCreate context
-    // is ready; verification runs server-side (verifyPurchase function) via VerifyPurchaseClient.
-    private val billingController by lazy {
-        BillingController(
-            context = applicationContext,
-            scope = lifecycleScope,
-            verifyClient = VerifyPurchaseClient(tokens = FirebaseGate::tokens),
-        )
-    }
-
-    private val onboardingAccessClient by lazy {
-        OnboardingAccessClient(tokens = FirebaseGate::tokens)
-    }
 
     // Drives the first-launch flight plan. The existing intro flag is retained as a migration-safe
     // completion bit so users who already saw the legacy welcome are not forced through setup.
@@ -141,26 +123,8 @@ class MainActivity : ComponentActivity() {
         requestMaxRefreshRate()
         GhosttyThemeRegistry.init(applicationContext)
         GhosttySettingsStore.init(applicationContext)
-        EntitlementStore.init(applicationContext)
+        GeminiKeyStore.init(applicationContext)
         onboardingVisible.value = !GhosttySettingsStore.introPlayed.value
-        // Play Billing doesn't depend on Firebase Auth: start it directly so product
-        // details / restore work even if sign-in is slow or offline. (Purchase
-        // verification fetches its own tokens per call via FirebaseGate.tokens.)
-        billingController.start()
-        // Anonymous sign-in + live entitlement mirror. Off the main thread; voice
-        // gates read the cached entitlement until this lands.
-        lifecycleScope.launch {
-            runCatching {
-                val uid = FirebaseGate.ensureSignedIn()
-                EntitlementStore.startListening(uid)
-                if (onboardingVisible.value) {
-                    GhosttySettingsStore.markOnboardingAccessCompletionPending()
-                    EntitlementStore.update(onboardingAccessClient.begin())
-                } else if (GhosttySettingsStore.onboardingAccessCompletionPending) {
-                    completePendingOnboardingAccess()
-                }
-            }.onFailure { GxrLog.w(TAG, "entitlement bootstrap failed: ${it.message}") }
-        }
         focusedPaneId.intValue = GhosttySettingsStore.focusedPaneId.value
         cockpit = DefaultCockpitLifecycle.getInstance(application)
         inputController = PaneInputController(cockpit)
@@ -264,8 +228,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }.collectAsState(initial = emptyList())
                 val isPaired by PairedMacStore.isPaired.collectAsState()
-                val entitlement by EntitlementStore.entitlement.collectAsState()
-                val billingState by billingController.uiState.collectAsState()
 
                 // Consume QR results at the Activity boundary so the exact same provisioning path
                 // works during first-run onboarding and in the regular reconnect scanner.
@@ -332,10 +294,6 @@ class MainActivity : ComponentActivity() {
                         onPendingFullSpaceRestoreConsumed = cockpit::consumePendingFullSpaceRestore,
                         hostKeyboardRelayState = hostKeyboardRelayController.state,
                         windowMirrorController = windowMirrorRelayController,
-                        billingState = billingState,
-                        onUpgradeToPro = { billingController.launchPurchase(this) },
-                        onManageSubscription = ::openManageSubscription,
-                        onRestorePurchase = billingController::restorePurchases,
                         onboardingCoachVisible = onboardingCoachVisible.value,
                         onOnboardingComplete = ::onOnboardingFinished,
                         onCoachNarrationRequested = { resourceId ->
@@ -370,10 +328,6 @@ class MainActivity : ComponentActivity() {
     private fun hasPermission(permission: String): Boolean =
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 
-    /** Open the Play subscription management page (cancel / payment method). */
-    private fun openManageSubscription() =
-        openUrl(BillingController.MANAGE_URL, "manage-subscription open failed")
-
     private fun openMacCompanionDownload() =
         openUrl(MAC_COMPANION_DOWNLOAD_URL, "Mac companion download page open failed")
 
@@ -395,17 +349,6 @@ class MainActivity : ComponentActivity() {
         GhosttySettingsStore.markIntroPlayed()
         onboardingVisible.value = false
         onboardingCoachVisible.value = false
-        GhosttySettingsStore.markOnboardingAccessCompletionPending()
-        lifecycleScope.launch {
-            runCatching {
-                completePendingOnboardingAccess()
-            }.onFailure { GxrLog.w(TAG, "onboarding access completion failed: ${it.message}") }
-        }
-    }
-
-    private suspend fun completePendingOnboardingAccess() {
-        EntitlementStore.update(onboardingAccessClient.complete())
-        GhosttySettingsStore.clearOnboardingAccessCompletionPending()
     }
 
     /**
@@ -466,7 +409,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        billingController.onForeground(this)
         hostKeyboardRelayController.start()
         if (hasLocalNetworkPermission()) {
             windowMirrorRelayController.start()
@@ -495,7 +437,6 @@ class MainActivity : ComponentActivity() {
     // Never hold the mic or host keyboard relay in the background.
     override fun onPause() {
         super.onPause()
-        billingController.onBackground(this)
         hostKeyboardRelayController.stop()
         windowMirrorRelayController.stop()
         voiceController.release()
@@ -511,8 +452,6 @@ class MainActivity : ComponentActivity() {
         hostKeyboardRelayController.stop()
         windowMirrorRelayController.release()
         onboardingNarration.release()
-        billingController.release()
-        EntitlementStore.stopListening()
     }
 
     /**

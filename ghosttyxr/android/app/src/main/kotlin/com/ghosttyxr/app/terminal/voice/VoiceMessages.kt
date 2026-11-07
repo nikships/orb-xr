@@ -7,7 +7,7 @@ package com.ghosttyxr.app.terminal.voice
  */
 object VoiceMessages {
     /** Shown when a free-tier user taps a voice affordance. */
-    const val PRO_REQUIRED_MESSAGE = "Voice features need Orb XR Pro — upgrade in Settings."
+    const val PRO_REQUIRED_MESSAGE = "Add your Gemini API key in Settings → Voice."
 
     /**
      * Shown when a turn ends with no usable speech (empty buffer or blank transcript).

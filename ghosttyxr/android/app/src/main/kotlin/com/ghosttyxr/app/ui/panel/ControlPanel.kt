@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import com.ghosttyxr.app.DEFAULT_ENVIRONMENT_ID
 import com.ghosttyxr.app.EnvironmentPicker
 import com.ghosttyxr.app.R
-import com.ghosttyxr.app.billing.BillingUiState
 import com.ghosttyxr.app.terminal.hostkeyboard.HostKeyboardRelayState
 import com.ghosttyxr.app.terminal.hostkeyboard.HostKeyboardRelayStatus
 import com.ghosttyxr.app.terminal.windowmirror.WindowMirrorState
@@ -130,11 +129,6 @@ fun TerminalControlPanel(
     onVoiceSilenceAutoStopChanged: (Boolean) -> Unit = {},
     voiceCommandsEnabled: Boolean = false,
     onVoiceCommandsEnabledChanged: (Boolean) -> Unit = {},
-    isPro: Boolean = false,
-    billingState: BillingUiState = BillingUiState.Idle,
-    onUpgradeToPro: () -> Unit = {},
-    onManageSubscription: () -> Unit = {},
-    onRestorePurchase: () -> Unit = {},
     hostKeyboardRelayState: HostKeyboardRelayState = HostKeyboardRelayState(),
     windowMirrorState: WindowMirrorState = WindowMirrorState(),
     onFocusWindowMirror: () -> Unit = {},
@@ -322,18 +316,6 @@ fun TerminalControlPanel(
         }
 
         add(
-            SettingsCard(areaId = "pro") {
-                ProSection(
-                    isPro = isPro,
-                    billingState = billingState,
-                    onUpgrade = onUpgradeToPro,
-                    onManage = onManageSubscription,
-                    onRestore = onRestorePurchase,
-                )
-            },
-        )
-
-        add(
             SettingsCard(areaId = "voice") {
                 VoicePanelSection(
                     voiceEnabled = voiceEnabled,
@@ -344,7 +326,6 @@ fun TerminalControlPanel(
                     onVoiceSilenceAutoStopChanged = onVoiceSilenceAutoStopChanged,
                     voiceCommandsEnabled = voiceCommandsEnabled,
                     onVoiceCommandsEnabledChanged = onVoiceCommandsEnabledChanged,
-                    isPro = isPro,
                 )
             },
         )

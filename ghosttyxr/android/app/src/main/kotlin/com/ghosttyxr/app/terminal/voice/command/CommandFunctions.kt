@@ -1,16 +1,13 @@
 package com.ghosttyxr.app.terminal.voice.command
 
 import com.ghosttyxr.app.terminal.session.AgentLaunch
-import com.google.firebase.ai.type.FunctionDeclaration
-import com.google.firebase.ai.type.Schema
 
 /**
  * The cockpit functions exposed to `gemini-3.8-live` for voice control.
  *
  * The name [String]s are `const val` so [VoiceCommandController] (which dispatches on them) and
- * its unit tests can reference them without loading any Firebase types — only [declarations]
- * constructs the Firebase [FunctionDeclaration]/[Schema] objects, and that's only touched by the
- * Firebase-facing [LiveCommandSession].
+ * its unit tests can reference them without opening a network connection. [declarations]
+ * describes the tools sent to the direct Gemini Live API.
  *
  * **Terminal numbering is 1-based** everywhere exposed to Gemini ("terminal one" is the first
  * terminal). The controller translates each `index` to the internal zero-based `paneId` after
@@ -41,8 +38,8 @@ object CommandFunctions {
     /** Upper bound on [READ_TERMINAL]'s `lines` so one read can't dump a huge screen into context. */
     const val MAX_READ_LINES = 100
 
-    /** Built lazily so merely referencing the name constants never constructs Firebase objects. */
-    val declarations: List<FunctionDeclaration> by lazy {
+    /** Built lazily; used only when constructing the Live setup message. */
+    internal val declarations: List<FunctionDeclaration> by lazy {
         listOf(
             FunctionDeclaration(
                 name = NEW_TERMINAL,

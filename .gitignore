@@ -8,6 +8,7 @@ ghosttyxr/zig-src/zig-pkg/
 ghosttyxr/zig-src/src/vendor/*/.zig-cache/
 ghosttyxr/zig-src/src/vendor/*/zig-pkg/
 ghosttyxr/android/.gradle/
+ghosttyxr/android/.kotlin/
 ghosttyxr/android/build/
 ghosttyxr/android/**/build/
 ghosttyxr/mac-companion/**/build/

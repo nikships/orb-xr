@@ -3,7 +3,7 @@ package com.ghosttyxr.app.wiring
 import com.ghosttyxr.app.terminal.session.CockpitLifecycle
 import com.ghosttyxr.app.terminal.session.CockpitState
 import com.ghosttyxr.app.terminal.settings.GhosttySettingsStore
-import com.ghosttyxr.app.billing.EntitlementStore
+import com.ghosttyxr.app.terminal.voice.GeminiKeyStore
 import com.ghosttyxr.app.terminal.handoff.HandoffResult
 import com.ghosttyxr.app.terminal.voice.command.LiveAudioStreamer
 import com.ghosttyxr.app.terminal.voice.command.LiveCommandEngine
@@ -44,7 +44,7 @@ fun buildVoiceDictationController(
     sendToPane = { paneId, bytes -> cockpit.activePanes().getOrNull(paneId)?.submitCommand(bytes) },
     focusedPaneIdProvider = focusedPaneId,
     autoSubmitProvider = { GhosttySettingsStore.voiceAutoSubmit.value },
-    isProProvider = { EntitlementStore.isPro },
+    isProProvider = { GeminiKeyStore.get() != null },
 )
 
 /**
@@ -128,7 +128,6 @@ fun buildVoiceCommandSession(
         streamer = LiveAudioStreamer(),
         scope = scope,
         ambientContext = { cockpit.voiceAmbientContext() },
-        isProProvider = { EntitlementStore.isPro },
     )
 }
 

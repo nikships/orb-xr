@@ -1,22 +1,15 @@
 package com.ghosttyxr.app.terminal.voice.command
 
 import com.ghosttyxr.app.terminal.voice.VoiceMessages
-import com.google.firebase.ai.type.FunctionCallPart
-import com.google.firebase.ai.type.FunctionResponsePart
-import com.google.firebase.ai.type.InlineDataPart
-import com.google.firebase.ai.type.LiveServerContent
-import com.google.firebase.ai.type.LiveServerToolCall
-import com.google.firebase.ai.type.PublicPreviewAPI
-import com.google.firebase.ai.type.TextPart
-import com.google.firebase.ai.type.Transcription
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@OptIn(PublicPreviewAPI::class)
 class LiveCommandEngineTest {
 
     private class FakeOutput : LiveSpeechOutput {
@@ -59,13 +52,6 @@ class LiveCommandEngineTest {
 
     private fun toolCall(name: String, args: Map<String, kotlinx.serialization.json.JsonElement> = emptyMap()) =
         FunctionCallPart(name, args)
-
-    private fun transcription(text: String): Transcription {
-        val constructor = Transcription::class.java.declaredConstructors
-            .single { it.parameterCount == 1 }
-            .apply { isAccessible = true }
-        return constructor.newInstance(text) as Transcription
-    }
 
     @Test
     fun `model audio starts speech output once and streams frames`() {
@@ -163,25 +149,14 @@ class LiveCommandEngineTest {
         val engine = engine(controller = focusedController, output = output)
         engine.onConnected()
 
-        val toolMsg = LiveServerToolCall(
-            listOf(toolCall("focus_terminal", mapOf("terminal_number" to JsonPrimitive(1)))),
-        )
+        val toolMsg = Json.parseToJsonElement("""{"toolCall":{"functionCalls":[{"id":"call-1","name":"focus_terminal","args":{"terminal_number":1}}]}}""").jsonObject
         val responses: List<FunctionResponsePart>? = routeLiveMessage(engine, toolMsg)
         assertEquals(1, responses!!.size)
+        assertEquals("call-1", responses[0].id)
         assertEquals(1, focusCalls)
 
         // PCM part inside server content routes to the output; turnComplete finishes the turn.
-        val pcmContent = LiveServerContent(
-            content = com.google.firebase.ai.type.Content(
-                "model",
-                listOf(InlineDataPart(byteArrayOf(9, 9), "audio/pcm;rate=24000")),
-            ),
-            interrupted = false,
-            turnComplete = true,
-            generationComplete = true,
-            inputTranscription = null,
-            outputTranscription = null,
-        )
+        val pcmContent = Json.parseToJsonElement("""{"serverContent":{"modelTurn":{"parts":[{"inlineData":{"mimeType":"audio/pcm;rate=24000","data":"CQk="}}]},"turnComplete":true}}""").jsonObject
         routeLiveMessage(engine, pcmContent)
         assertEquals(1, output.written.size)
         // Audio played but no transcript and no tool results: the last tool result's message
@@ -197,19 +172,7 @@ class LiveCommandEngineTest {
         val engine = engine()
         engine.onConnected()
 
-        val textContent = LiveServerContent(
-            content = com.google.firebase.ai.type.Content(
-                "model",
-                listOf(TextPart("Focused terminal 1.")),
-            ),
-            interrupted = false,
-            turnComplete = true,
-            generationComplete = true,
-            inputTranscription = null,
-            outputTranscription = null,
-        )
-        // Output transcription normally arrives via the transcript handler; simulate it here.
-        engine.onOutputTranscript("Focused terminal 1.")
+        val textContent = Json.parseToJsonElement("""{"serverContent":{"outputTranscription":{"text":"Focused terminal 1."},"turnComplete":true}}""").jsonObject
         routeLiveMessage(engine, textContent)
         assertEquals(LiveCommandState.Result("Focused terminal 1."), engine.state.value)
     }
@@ -224,14 +187,7 @@ class LiveCommandEngineTest {
 
         routeLiveMessage(
             engine,
-            LiveServerContent(
-                content = null,
-                interrupted = false,
-                turnComplete = false,
-                generationComplete = false,
-                inputTranscription = transcription("git status"),
-                outputTranscription = null,
-            ),
+            Json.parseToJsonElement("""{"serverContent":{"inputTranscription":{"text":"git status"}}}""").jsonObject,
             onInputTranscript = transcripts::add,
         )
 

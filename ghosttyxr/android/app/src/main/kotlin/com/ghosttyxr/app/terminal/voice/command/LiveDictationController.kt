@@ -1,7 +1,6 @@
 package com.ghosttyxr.app.terminal.voice.command
 
 import com.ghosttyxr.app.terminal.voice.VoiceMessages
-import com.google.firebase.ai.type.FunctionCallPart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

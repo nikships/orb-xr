@@ -7,14 +7,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// Apply the google-services plugin only when the Firebase config is present.
-// google-services.json is checked in (see repo root .gitignore note) so release
-// builds package the Firebase project config and voice commands work out of the
-// box. The existence guard is kept as a safety net: a contributor who removes
-// the file still gets a building project, with the feature off until it returns.
-if (rootProject.file("app/google-services.json").exists()) {
-    apply(plugin = libs.plugins.google.services.get().pluginId)
-}
 
 // Play Store upload keystore (see local.properties wiring above). The
 // keystore file itself lives outside the repo (~/.gplay/); only its path and
@@ -35,8 +27,8 @@ android {
         applicationId = "com.ghosttyxr.app"
         minSdk = 24
         targetSdk = 37
-        versionCode = 15
-        versionName = "0.1.14"
+        versionCode = 16
+        versionName = "0.1.15"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -44,11 +36,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Always-empty defaults so BuildConfig.DEV_* exists in every variant;
-        // the debug build type overrides them from local.properties (see below).
-        buildConfigField("String", "DEV_AUTH_EMAIL", "\"\"")
-        buildConfigField("String", "DEV_AUTH_PASSWORD", "\"\"")
-        buildConfigField("String", "DEV_APPCHECK_TOKEN", "\"\"")
     }
 
     signingConfigs {
@@ -65,27 +52,6 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            // Dev backdoor: debug builds sign into a fixed Firebase dev account
-            // (devauth.* in gitignored local.properties) instead of anonymous auth,
-            // so the uid — and its hand-granted Pro entitlement — survives the
-            // dozens of adb reinstalls a day. Empty in CI; release never sees these.
-            buildConfigField(
-                "String",
-                "DEV_AUTH_EMAIL",
-                "\"${localProperties.getProperty("devauth.email", "")}\"",
-            )
-            buildConfigField(
-                "String",
-                "DEV_AUTH_PASSWORD",
-                "\"${localProperties.getProperty("devauth.password", "")}\"",
-            )
-            // Fixed App Check debug token (registered in the Firebase console) so
-            // reinstalls don't mint a new token needing manual console approval.
-            buildConfigField(
-                "String",
-                "DEV_APPCHECK_TOKEN",
-                "\"${localProperties.getProperty("devappcheck.token", "")}\"",
-            )
         }
         release {
             // R8 full mode (AGP 9 default): shrink + obfuscate + optimize.
@@ -193,22 +159,6 @@ dependencies {
     // phase, so we won't re-tool later.
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
-    // Firebase AI Logic — Gemini Live API for voice command control (liveModel +
-    // function calling). BoM pins the firebase-ai version. Requires a Firebase
-    // project config at app/google-services.json (gitignored) to talk to the
-    // backend at runtime; absent that, the app builds and the feature stays off.
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.ai)
-    // Anonymous auth + App Check attest the app to the Pro-gated Cloud Functions
-    // (stt / petTts / verifyPurchase); Firestore mirrors the entitlement doc live.
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.appcheck.playintegrity)
-    debugImplementation(libs.firebase.appcheck.debug)
-    implementation(libs.firebase.firestore)
-    // Play Billing: Pro subscription purchase + restore.
-    implementation(libs.billing.ktx)
-    // Task.await() for Firebase Auth / App Check / Billing suspend bridges.
-    implementation(libs.kotlinx.coroutines.play.services)
     // JSON value types for the Gemini Live function-call args/results.
     implementation(libs.kotlinx.serialization.json)
     debugImplementation(libs.androidx.compose.ui.tooling)

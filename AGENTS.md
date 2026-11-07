@@ -36,12 +36,9 @@ Empty leftover dirs under `ghosttyxr/android/` are not modules.
 - `CockpitLifecycle` / `DefaultCockpitLifecycle` own pane identity, focus,
   fresh/resume selection, capture, and host-session termination (1..6 panes)
 - Voice pet (palm-up) + Gemini tools; pet TTS via Firebase `petTts`; STT via `stt`
-- **Monetization:** Free tier = cockpit with no AI; Pro (`pro_monthly`, Play
-  Billing) unlocks all voice AI. Entitlement is server-side (Firestore
-  `entitlements/{uid}`, written by `verifyPurchase`/`playRtdn` functions).
-  See [`docs/monetization.md`](docs/monetization.md).
-- First flight receives one bounded server-owned onboarding access window; it
-  ends when onboarding completes and never replaces a paid Play entitlement
+- **Voice:** Bring your own Gemini API key in Settings → Voice. The app connects
+  directly to Gemini and has no subscription or Firebase dependency. The terminal
+  cockpit works without a key. The old backend in `firebase/` is not used.
 - Window mirror (H.264/HEVC video on a direct LAN TCP socket, port 45876; control
   and input over the SSH tunnel, port 45874)
 - Host keyboard relay (Mac keystrokes → focused pane, port 45873)
@@ -112,10 +109,9 @@ cd firebase/functions && npm install && npm test
   disconnects; reconnect attaches, it does not restart work.
 - **No silent pairing fallbacks.** Never invent an IP or host fingerprint. If
   the host key is missing, omit `fp` rather than guessing. Surface real errors.
-- **No secrets in the repo, no AI keys in the APK — period.** Deepgram + Gemini
-  keys live only as Firebase function secrets; Play SA JSON as `PLAY_SA_KEY`.
-  There is no BYO-key path. Voice AI is Pro-gated server-side; never re-add a
-  client-side key or bypass the entitlement check.
+- **No secrets in the repo or APK.** The user supplies their own Gemini key
+  through Settings, stored in encrypted Android preferences. Never add a
+  bundled key, Firebase dependency, subscription gate, or managed AI backend.
 - **CWD inheritance is host-probed and timing-sensitive.** `PaneCwdProbe`
   queries `tmux -L gxr ... '#{pane_current_path}'` over a short-lived verified
   shell, then passes the concrete path to `new-session -c`; OSC 7 is fallback

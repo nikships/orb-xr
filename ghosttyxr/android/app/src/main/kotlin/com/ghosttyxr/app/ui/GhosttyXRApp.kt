@@ -50,8 +50,6 @@ import com.ghosttyxr.app.terminal.spatial.PaneContent
 import com.ghosttyxr.app.terminal.ssh.PairedMacStore
 import com.ghosttyxr.app.terminal.theme.GhosttyThemeRegistry
 import com.ghosttyxr.app.terminal.voice.command.LiveDictationController
-import com.ghosttyxr.app.billing.BillingUiState
-import com.ghosttyxr.app.billing.EntitlementStore
 import com.ghosttyxr.app.terminal.voice.command.VoiceCommandController
 import com.ghosttyxr.app.terminal.windowmirror.SymbiosisPointerOwner
 import com.ghosttyxr.app.terminal.windowmirror.WindowMirrorRelayController
@@ -117,11 +115,6 @@ fun GhosttyXRApp(
     onPendingFullSpaceRestoreConsumed: () -> Unit = {},
     hostKeyboardRelayState: StateFlow<HostKeyboardRelayState>? = null,
     windowMirrorController: WindowMirrorRelayController? = null,
-    // Pro subscription paywall state + actions. No-op defaults for previews/tests.
-    billingState: BillingUiState = BillingUiState.Idle,
-    onUpgradeToPro: () -> Unit = {},
-    onManageSubscription: () -> Unit = {},
-    onRestorePurchase: () -> Unit = {},
     onboardingCoachVisible: Boolean = false,
     onOnboardingComplete: () -> Unit = {},
     onCoachNarrationRequested: (Int?) -> Unit = {},
@@ -145,7 +138,6 @@ fun GhosttyXRApp(
     val voiceSilenceAutoStop by GhosttySettingsStore.voiceSilenceAutoStop.collectAsState()
     val voiceCommandsEnabled by GhosttySettingsStore.voiceCommandsEnabled.collectAsState()
     val snapPanesToSurfaces by GhosttySettingsStore.snapPanesToSurfaces.collectAsState()
-    val entitlement by EntitlementStore.entitlement.collectAsState()
     val hostKeyboardState = hostKeyboardRelayState.collectAsStateOr(HostKeyboardRelayState())
     val windowMirrorState = windowMirrorController?.state.collectAsStateOr(WindowMirrorState())
     val mirrorVisible = windowMirrorController != null && windowMirrorState.hasWindow
@@ -517,11 +509,6 @@ fun GhosttyXRApp(
                 voiceSilenceAutoStop = voiceSilenceAutoStop,
                 onVoiceSilenceAutoStopChanged = GhosttySettingsStore::setVoiceSilenceAutoStop,
                 voiceCommandsEnabled = voiceCommandsEnabled,
-                isPro = entitlement.isPro(),
-                billingState = billingState,
-                onUpgradeToPro = onUpgradeToPro,
-                onManageSubscription = onManageSubscription,
-                onRestorePurchase = onRestorePurchase,
                 onVoiceCommandsEnabledChanged = onVoiceCommandsEnabledChanged,
                 hostKeyboardRelayState = hostKeyboardState,
                 windowMirrorState = windowMirrorState,

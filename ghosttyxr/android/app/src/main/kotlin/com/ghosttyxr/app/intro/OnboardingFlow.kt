@@ -61,7 +61,7 @@ import com.ghosttyxr.app.ui.chrome.GxrPanel
 import com.ghosttyxr.app.ui.chrome.GxrText
 import androidx.lifecycle.compose.LifecycleResumeEffect
 
-const val MAC_COMPANION_DOWNLOAD_URL = "https://ghosttyxr-headset.web.app"
+const val MAC_COMPANION_DOWNLOAD_URL = "https://github.com/nikships/orb-xr/releases/latest"
 
 enum class OnboardingStep(@RawRes val narrationRes: Int) {
     WELCOME(R.raw.onboarding_welcome),

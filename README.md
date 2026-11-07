@@ -4,10 +4,13 @@
 
 Get the Android XR headset APK and the signed, notarized Mac companion from
 [GitHub Releases](https://github.com/nikships/orb-xr/releases).
-The initial APK is a release-mode, **debug-signed sideload build**, not a Play
+The APK is a release-mode, **debug-signed sideload build**, not a Play
 Store release. It cannot update an installation signed with a different key.
-Firebase-backed features depend on the deployed service and device attestation;
-they may not work in a sideloaded build.
+Voice uses your own Gemini API key and connects directly to Google's Gemini API.
+Add or remove the key in Settings → Voice. It is stored using Android's
+encrypted preferences. Audio and any terminal context requested by voice tools
+are sent to Gemini under your account; Google's terms and charges apply.
+The app does not require an Orb XR subscription or Firebase project.
 
 This public repository starts from a clean source snapshot. The earlier private
 repository and its history are not published.
@@ -45,7 +48,7 @@ Contributor / agent map: **[AGENTS.md](AGENTS.md)**.
 | [`ghosttyxr/android/`](ghosttyxr/android/AGENTS.md) | Headset app (Kotlin + Compose for XR) |
 | [`ghosttyxr/zig-src/`](ghosttyxr/zig-src/AGENTS.md) | Native `libghosttyxr.so` (libghostty + libssh2 JNI) |
 | [`ghosttyxr/mac-companion/`](ghosttyxr/mac-companion/AGENTS.md) | Mac SwiftUI companion (pairing, keyboard, window mirror, handoff) |
-| [`firebase/`](firebase/AGENTS.md) | Cloud Functions: STT/TTS, entitlements, Play verification |
+| `firebase/` | Legacy backend and hosting files, not used by the app |
 | [`website/`](website/AGENTS.md) | Marketing site (Next.js → Firebase Hosting) |
 | [`store/play/`](store/play/AGENTS.md) | Play listing copy + graphics |
 | [`docs/`](docs/AGENTS.md) | Architecture, monetization, CWD, onboarding notes |
@@ -164,10 +167,9 @@ open build/Build/Products/Debug/GhosttyXRCompanion.app
 
 See [`ghosttyxr/mac-companion/AGENTS.md`](ghosttyxr/mac-companion/AGENTS.md).
 
-## Firebase backend & marketing site
+## Legacy backend & marketing site
 
-- **Functions** (`firebase/`): entitlement-gated `stt` / `petTts`, onboarding
-  access, Play `verifyPurchase` + RTDN. Project `ghosttyxr-headset`.
+- **Functions** (`firebase/`): legacy code, not used by the BYOK app. Do not deploy.
 - **Marketing site** (`website/`): Next.js 16 static export deployed by CI to
   Firebase Hosting (`https://ghosttyxr-headset.web.app/`).
 - Companion download mini-site artifacts still live under `firebase/public/`;
@@ -228,9 +230,8 @@ libghostty + libssh2 + Compose-Canvas pattern. Do not commit `chuchu/`.
 
 ## Status
 
-Headset app ships on Play internal track `android_xr:internal`. Companion
-ships signed/notarized via CI. Voice AI is Free cockpit + Pro (`pro_monthly`)
-server entitlement; first flight gets a bounded onboarding access window.
+The open-source headset build has no subscription. Voice requires a
+user-supplied Gemini key; the terminal cockpit works without one.
 
 **Caveats:**
 

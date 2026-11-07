@@ -21,18 +21,9 @@ mlkitBarcode = "17.3.0"
 securityCrypto = "1.1.0"
 okhttp = "5.5.0"
 json = "20260814"
-# Firebase AI Logic — Gemini Live API (voice command control). BoM manages the
-# firebase-ai version; google-services maps google-services.json into resources.
-firebaseBom = "34.19.0"
-googleServices = "4.5.0"
-# JSON types used in the Gemini Live function-call args/results (firebase-ai
-# exposes kotlinx-serialization-json in its public API; we depend on it directly
-# so our controller + its tests compile without relying on a transitive).
+# JSON types used in the Gemini Live function-call args/results.
 kotlinxSerializationJson = "1.11.0"
-# Play Billing — Pro subscription purchase flow (monetization).
-billing = "9.1.0"
-# Task.await() bridges for Firebase Auth / App Check / Firestore calls.
-coroutinesPlayServices = "1.11.0"
+coroutines = "1.11.0"
 junit = "4.13.2"
 androidxTestRunner = "1.7.0"
 androidxTestExtJunit = "1.3.0"
@@ -76,23 +67,9 @@ okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver" 
 # Real org.json impl for host-JVM unit tests; the android.jar stub returns
 # default values, which would make response-parsing tests meaningless.
 json = { group = "org.json", name = "json", version.ref = "json" }
-# Firebase AI Logic client SDK; version is supplied by the Firebase BoM, so no
-# version.ref here. Carries the Gemini Live API (liveModel + function calling).
-firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
-firebase-ai = { group = "com.google.firebase", name = "firebase-ai" }
-# Anonymous auth + App Check (Play Integrity) + Firestore entitlement listener.
-# Versions come from the Firebase BoM.
-firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
-firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
-firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }
-firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
-# Play Billing for the Pro subscription.
-billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
-kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutinesPlayServices" }
-kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesPlayServices" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

@@ -1,26 +1,23 @@
 package com.ghosttyxr.app.terminal.voice.command
 
 import com.ghosttyxr.app.terminal.voice.VoiceMessages
-import com.google.firebase.ai.type.FunctionCallPart
-import com.google.firebase.ai.type.FunctionResponsePart
-import com.google.firebase.ai.type.InlineDataPart
-import com.google.firebase.ai.type.LiveServerContent
-import com.google.firebase.ai.type.LiveServerGoAway
-import com.google.firebase.ai.type.LiveServerToolCall
-import com.google.firebase.ai.type.LiveServerToolCallCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.google.firebase.ai.type.PublicPreviewAPI
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.booleanOrNull
 
 /**
- * Pure dispatch + speech-output core for the **Gemini Live** voice-command path. Owns no mic,
- * no network, and no Firebase types beyond the plain-JVM `FunctionCallPart`/`FunctionResponsePart`
+ * Pure dispatch + speech-output core for the **Gemini Live** voice-command path. Owns no mic
+ * or network, and uses plain-JVM `FunctionCallPart`/`FunctionResponsePart`
  * value types — every Live-session, audio-playback, and text-speech dependency is injected as a
  * lambda or small interface, so the whole turn state machine is unit-tested with fakes.
  *
@@ -34,12 +31,10 @@ import kotlinx.serialization.json.JsonPrimitive
  *   output-audio transcription text lands as `Result`/`Error` state for the toast +
  *   [com.ghosttyxr.app.terminal.voice.tts.PetSpeechCoordinator].
  *
- * The Firebase-touching adapter ([LiveCommandSession]) owns `connect()`, mic streaming, PCM
+ * The direct Gemini adapter ([LiveCommandSession]) owns the connection, mic streaming, PCM
  * playback, and plaintext fallback speech; this core only decides *what* happens per message.
  *
- * The Live API is a Firebase public preview ([PublicPreviewAPI]): every entry point here opts in.
  */
-@OptIn(PublicPreviewAPI::class)
 class LiveCommandEngine(
     private val controller: VoiceCommandController,
     /** Where model speech PCM plays; swappable when the pet surface (re)builds. */
@@ -121,14 +116,14 @@ class LiveCommandEngine(
      * happens in the caller), return the responses for the session to send back. Returns null
      * when the round cap is hit — the caller should stop answering further calls this turn.
      */
-    suspend fun onToolCalls(calls: List<FunctionCallPart>): List<FunctionResponsePart>? {
+    internal suspend fun onToolCalls(calls: List<FunctionCallPart>): List<FunctionResponsePart>? {
         if (calls.isEmpty()) return emptyList()
         if (rounds >= MAX_TOOL_ROUNDS) return null
         rounds++
         _state.value = LiveCommandState.Thinking
         val results = calls.map { it.name to controller.handleCall(it.name, it.args) }
         lastResults = results
-        return results.map { (name, json) -> FunctionResponsePart(name, json) }
+        return calls.zip(results).map { (call, result) -> FunctionResponsePart(result.first, result.second, call.id) }
     }
 
     /**
@@ -241,56 +236,44 @@ interface LiveSpeechOutput {
 }
 
 /**
- * Route one [com.google.firebase.ai.type.LiveServerMessage] into [LiveCommandEngine].
+ * Route one Gemini Live server message into [LiveCommandEngine].
  * Kept as a free function (not a method) so the routing table unit-tests without a session.
  *
  * Returns the function responses to send back when the message carried tool calls, or null
  * when there is nothing to answer (or the round cap was hit).
  */
-@OptIn(PublicPreviewAPI::class)
-suspend fun routeLiveMessage(
+internal suspend fun routeLiveMessage(
     engine: LiveCommandEngine,
-    message: Any?,
+    message: JsonObject,
     onInputTranscript: (String) -> Unit = {},
 ): List<FunctionResponsePart>? {
-    return when (message) {
-        is LiveServerToolCall -> engine.onToolCalls(message.functionCalls)
-        is LiveServerToolCallCancellation ->
-            // Model withdrew the call (barge-in / superseded): cut speech, keep the turn alive.
-            null.also { engine.onInterrupted() }
-        is LiveServerContent -> {
-            message.inputTranscription?.text?.takeIf { it.isNotEmpty() }?.let {
-                engine.onUserActivity()
-                onInputTranscript(it)
+    message["toolCall"]?.jsonObject?.get("functionCalls")?.jsonArray?.let { calls ->
+        return engine.onToolCalls(calls.map { item ->
+            val call = item.jsonObject
+            FunctionCallPart(
+                call["name"]?.jsonPrimitive?.contentOrNull.orEmpty(),
+                call["args"]?.jsonObject.orEmpty(),
+                call["id"]?.jsonPrimitive?.contentOrNull.orEmpty(),
+            )
+        })
+    }
+    if (message.containsKey("toolCallCancellation")) engine.onInterrupted()
+    if (message.containsKey("goAway")) engine.onError("Voice session ended — tap to reconnect.")
+    message["serverContent"]?.jsonObject?.let { content ->
+        content["inputTranscription"]?.jsonObject?.get("text")?.jsonPrimitive?.contentOrNull
+            ?.takeIf { it.isNotEmpty() }?.let { engine.onUserActivity(); onInputTranscript(it) }
+        if (content["interrupted"]?.jsonPrimitive?.booleanOrNull == true) engine.onInterrupted()
+        content["outputTranscription"]?.jsonObject?.get("text")?.jsonPrimitive?.contentOrNull
+            ?.let(engine::onOutputTranscript)
+        content["modelTurn"]?.jsonObject?.get("parts")?.jsonArray?.forEach { part ->
+            val data = part.jsonObject["inlineData"]?.jsonObject ?: return@forEach
+            val mime = data["mimeType"]?.jsonPrimitive?.contentOrNull.orEmpty()
+            val audio = data["data"]?.jsonPrimitive?.contentOrNull
+            if (mime.startsWith("audio/pcm", ignoreCase = true) && audio != null) {
+                engine.onModelAudio(java.util.Base64.getDecoder().decode(audio))
             }
-            routeServerContent(engine, message)
-            if (message.turnComplete) engine.onTurnComplete()
-            null
         }
-        is LiveServerGoAway ->
-            // Server is ending the session (time left in `timeLeft`): surface a notice; the
-            // adapter reconnects on the next user turn.
-            null.also { engine.onError("Voice session ended — tap to reconnect.") }
-        else -> null
+        if (content["turnComplete"]?.jsonPrimitive?.booleanOrNull == true) engine.onTurnComplete()
     }
-}
-
-@OptIn(PublicPreviewAPI::class)
-private fun routeServerContent(
-    engine: LiveCommandEngine,
-    content: LiveServerContent,
-) {
-    if (content.interrupted) {
-        engine.onInterrupted()
-        return
-    }
-    engine.onOutputTranscript(content.outputTranscription?.text.orEmpty())
-    val parts = content.content?.parts.orEmpty()
-    for (part in parts) {
-        // Model speech arrives as InlineDataPart (audio/pcm MIME) on this SDK.
-        val audio = (part as? InlineDataPart)?.takeIf {
-            it.mimeType.startsWith("audio/pcm", ignoreCase = true)
-        }?.inlineData
-        if (audio != null && audio.isNotEmpty()) engine.onModelAudio(audio)
-    }
+    return null
 }
