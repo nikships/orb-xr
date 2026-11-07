@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission
+        android:name="android.permission.ACCESS_LOCAL_NETWORK"
+        android:minSdkVersion="37" />
+    <!-- Hand tracking (dangerous, runtime-requested) for the palm-up hand menu. -->
+    <uses-permission android:name="android.permission.HAND_TRACKING" />
+    <uses-permission android:name="android.permission.SCENE_UNDERSTANDING_COARSE" />
+    <!--
+        Head tracking (dangerous, runtime-requested). DeviceTrackingMode.SPATIAL — which powers
+        rotateToLookAtUser panes and the hand menu's "face me" billboard — requires this on
+        immersive devices.
+    -->
+    <uses-permission android:name="android.permission.HEAD_TRACKING" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.xr.api.spatial"
+        android:required="true" />
+
+    <uses-feature
+        android:name="android.hardware.xr.input.controller"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.xr.input.hand_tracking"
+        android:required="false" />
+
+    <application
+        android:name=".GhosttyXRApplication"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.GhosttyXR"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <!--
+            Launch in Home Space: the app opens as a normal window alongside other
+            apps (multitasking), like YouTube on Galaxy XR. The user expands into
+            Full Space (immersive cockpit) via the in-app toggle, which calls
+            Scene.requestFullSpace() / requestHomeSpace().
+        -->
+        <property
+            android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+            android:value="XR_ACTIVITY_START_MODE_HOME_SPACE" />
+
+        <!--
+            androidx.xr.arcore pulls in ARCore transitively for hand tracking
+            (the palm-up hand menu), which is an optional feature — declare
+            the dependency type explicitly or Play Console upload validation
+            rejects the bundle ("ARCore dependency type... missing").
+        -->
+        <meta-data
+            android:name="com.google.ar.core"
+            android:value="optional" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboard|keyboardHidden|uiMode"
+            android:theme="@style/Theme.GhosttyXR">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -1,0 +1,44 @@
+.{
+    .name = .ghosttyxr,
+    .version = "0.0.0",
+    // Pin rationale (Zig 0.16 migration):
+    // - zig 0.16.0: upstream ghostty main requires it (#12726). zigimg master
+    //   and the openssl-zig 0.16 branch also target 0.16 only, so the whole
+    //   dep graph moves together.
+    // - ghostty 4c725242b: ghostty-org/ghostty main (2026-07-24), the first
+    //   `main` state we consume post-0.16 merge. `ghostty-vt` module surface
+    //   is unchanged from the previous 0.15.2 pin apart from std_options /
+    //   test-log tweaks in src/lib_vt.zig.
+    // - openssl d4096dc34: anand-92/openssl-zig branch zig-0.16. Upstream
+    //   jossephus/openssl-zig zig-pkg is still 0.15.2-only (uses
+    //   `std.fs.accessAbsolute`, `Compile.linkLibC`, `b.graph.env_map` — all
+    //   removed in 0.16). This branch is that exact tree plus the stdlib
+    //   renames. Move back to jossephus once it lands 0.16.
+    // - zigimg master 096115a3e: the 0.16 line (the zig-0.15 branch is
+    //   0.15-only). PNG/Image API we use is unchanged.
+    // - libssh2 vendored at upstream tag 1.11.1.
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .ghostty = .{
+            .url = "git+https://github.com/ghostty-org/ghostty?ref=main#4c725242b7dbe8c77c6e227ef1f9540c5ef17921",
+            .hash = "ghostty-1.3.2-dev-5UdBCzTUJAUg5D_XUejyl0nNW48kBSFdCdaHMlUvXVxq",
+        },
+        .zigimg = .{
+            .url = "git+https://github.com/zigimg/zigimg?ref=master#096115a3eeae1a4c477496d575f1f1f74865387c",
+            .hash = "zigimg-0.1.0-8_eo2mHBFwDLhWjXriR17_b7VF6qML1f98Xokp7ZZbop",
+        },
+        .libssh2 = .{
+            .path = "src/vendor/libssh2",
+        },
+        .openssl = .{
+            .url = "git+https://github.com/anand-92/openssl-zig?ref=zig-0.16#d4096dc34dac6f9f556fa35fc942c2f77a8e92d3",
+            .hash = "openssl-3.6.0-wZcA750o8gGtMDeNlToZiyPOwGlCof58gfgK-e4a_mKE",
+        },
+    },
+    .fingerprint = 0xc78fc15b26eedde6,
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

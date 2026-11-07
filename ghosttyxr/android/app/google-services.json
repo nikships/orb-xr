@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "600573516591",
+    "project_id": "ghosttyxr-headset",
+    "storage_bucket": "ghosttyxr-headset.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:600573516591:android:2c6f63d987e225457b5fda",
+        "android_client_info": {
+          "package_name": "com.ghosttyxr.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDC8bcBmBbeXQi_m4_AEkPYt5h7wyGYVEM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

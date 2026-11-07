@@ -1,0 +1,69 @@
+name: GhosttyXRCompanion
+options:
+  bundleIdPrefix: dev.ghosttyxr
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    GENERATE_INFOPLIST_FILE: NO
+    PRODUCT_NAME: GhosttyXRCompanion
+    PRODUCT_BUNDLE_IDENTIFIER: dev.ghosttyxr.companion
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: YES
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    # The orb starfield hashes with `fract(sin(x) * 43758.5453)`, which turns a 1-ULP
+    # difference in `sin` into an entirely different star. Fast math would therefore
+    # drift the Metal orb away from the WebGL/GLSL ports it must match visually.
+    MTL_FAST_MATH: NO
+targets:
+  GhosttyXRCompanion:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/GhosttyXRCompanion
+    info:
+      path: Sources/GhosttyXRCompanion/Info.plist
+      properties:
+        CFBundleName: Orb XR
+        CFBundleDisplayName: Orb XR
+        CFBundleIdentifier: dev.ghosttyxr.companion
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleExecutable: GhosttyXRCompanion
+        CFBundlePackageType: APPL
+        LSMinimumSystemVersion: "14.0"
+        LSUIElement: NO
+        NSHighResolutionCapable: YES
+        NSLocalNetworkUsageDescription: "Orb XR connects directly to the paired Galaxy XR headset for encrypted, low-latency Mac screen mirroring."
+        NSInputMonitoringUsageDescription: "Orb XR captures your Mac keyboard only when you start forwarding, then sends those keystrokes through SSH to the focused Orb XR terminal in your Galaxy XR headset."
+        NSScreenCaptureUsageDescription: "Orb XR captures only the Mac window you choose so Orb XR can mirror it in your Galaxy XR headset."
+  GhosttyXRCompanionTests:
+    type: bundle.unit-test
+    platform: macOS
+    hostApplication: GhosttyXRCompanion
+    settings:
+      base:
+        PRODUCT_NAME: GhosttyXRCompanionTests
+        PRODUCT_MODULE_NAME: GhosttyXRCompanionTests
+        PRODUCT_BUNDLE_IDENTIFIER: dev.ghosttyxr.companion.tests
+        # The app target ships a hand-written Info.plist, so the project-level base
+        # setting turns generation off. The XCTest bundle has no plist of its own and
+        # cannot be code signed without one, so let Xcode synthesize it here.
+        GENERATE_INFOPLIST_FILE: YES
+    sources:
+      - path: Tests/GhosttyXRCompanionTests
+        excludes:
+          - Fixtures/**
+      # Shared window-mirror contract + frozen vectors (symlinks into protocol/).
+      # buildPhase resources ensures they land in the XCTest bundle; production
+      # app target must not include these fixtures.
+      - path: Tests/GhosttyXRCompanionTests/Fixtures
+        buildPhase: resources
+    dependencies:
+      - target: GhosttyXRCompanion

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070a0e">
+  <meta name="description" content="Privacy Policy for Orb XR.">
+  <title>Privacy Policy | Orb XR</title>
+  <link rel="icon" href="/seo/favicon.ico">
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+    :root {
+      color-scheme: dark;
+      --ink: #eef5ff;
+      --muted: #9caabd;
+      --canvas: #070a0e;
+      --surface: #101520;
+      --cyan: #40edf4;
+      --line: rgba(180, 199, 230, .16);
+      --mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --display: "Space Grotesk", Inter, system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-width: 320px;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 44% 22% at 78% 8%, rgba(80, 224, 233, .1), transparent),
+        radial-gradient(ellipse 34% 18% at 5% 28%, rgba(135, 101, 255, .09), transparent),
+        var(--canvas);
+      font-family: var(--display);
+      line-height: 1.65;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, .012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .012) 1px, transparent 1px);
+      background-size: 44px 44px;
+      content: "";
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+    main { width: min(860px, calc(100% - 48px)); margin: auto; }
+    nav {
+      display: flex;
+      min-height: 86px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: inherit;
+      font: 500 12px var(--mono);
+      letter-spacing: .13em;
+      text-decoration: none;
+    }
+
+    .brand img { width: 30px; height: 30px; border-radius: 8px; }
+    .back { color: var(--muted); font: 10px var(--mono); text-decoration: none; }
+    .back:hover, a { color: var(--cyan); }
+
+    article { padding: 74px 0 100px; }
+    .eyebrow {
+      margin: 0 0 18px;
+      color: var(--cyan);
+      font: 500 11px var(--mono);
+      letter-spacing: .14em;
+    }
+
+    h1 { margin: 0; font-size: clamp(42px, 7vw, 68px); line-height: 1; letter-spacing: -.055em; }
+    h2 {
+      margin: 48px 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 20px;
+      letter-spacing: -.02em;
+    }
+
+    p, li { color: #c4cfdd; font-size: 15px; }
+    .meta { margin: 18px 0 42px; color: var(--muted); font: 10px var(--mono); }
+    code { padding: 2px 5px; color: var(--cyan); background: var(--surface); border-radius: 4px; }
+    ul { padding-left: 21px; }
+    li { margin: 8px 0; }
+
+    .table-wrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 10px; }
+    table { width: 100%; min-width: 680px; border-collapse: collapse; background: rgba(16, 21, 32, .72); }
+    th, td { padding: 14px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    tr:last-child td { border-bottom: 0; }
+    th { color: var(--muted); font: 500 9px var(--mono); letter-spacing: .08em; }
+    td { color: #c4cfdd; font-size: 13px; }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 24px 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font: 9px var(--mono);
+    }
+
+    @media (max-width: 600px) {
+      main { width: min(100% - 30px, 860px); }
+      nav { min-height: 70px; }
+      article { padding-top: 54px; }
+      p, li { font-size: 14px; }
+      footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <nav aria-label="Privacy navigation">
+      <a class="brand" href="/" aria-label="Orb XR home">
+        <img src="/images/orbxr/orb-mascot.png" alt="">
+        <span>ORB XR</span>
+      </a>
+      <a class="back" href="/">← BACK TO SITE</a>
+    </nav>
+
+    <article>
+      <p class="eyebrow">PRIVACY / TRANSPARENCY</p>
+      <h1>Privacy Policy</h1>
+      <p class="meta">Developer: Orb XR · Package: <code>com.ghosttyxr.app</code> · Last updated: 2026-07-12</p>
+
+      <p>
+        Orb XR ("the app") is an Android XR workspace that connects to a Mac you own and control.
+        This policy explains what data the app accesses, where it goes, and how it is used.
+      </p>
+
+      <h2>Summary</h2>
+      <p>
+        Terminal, keyboard-forwarding, and window-mirroring traffic travels directly between your
+        headset and your Mac through an encrypted SSH connection. The developer does not relay or
+        inspect terminal content. Optional voice AI and subscription verification use the services
+        described below. Orb XR has no ads and does not sell personal data.
+      </p>
+
+      <h2>What the app accesses</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>DATA / PERMISSION</th><th>PURPOSE</th><th>WHERE IT GOES</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Camera</td>
+              <td>Scan the pairing QR shown by the Orb XR Mac companion.</td>
+              <td>Processed on the headset. Camera images are not recorded or uploaded.</td>
+            </tr>
+            <tr>
+              <td>Microphone and voice input</td>
+              <td>Optional dictation, spatial voice commands, and voice-pet interactions.</td>
+              <td>Audio may be sent through authenticated Firebase Cloud Functions to Deepgram for transcription. Command text and short text-to-speech requests may be processed by Google Gemini services.</td>
+            </tr>
+            <tr>
+              <td>SSH host, username, host fingerprint, and generated key material</td>
+              <td>Securely pair and reconnect to your Mac.</td>
+              <td>Stored on the headset using Android encrypted storage. Connection details are sent only to the paired Mac.</td>
+            </tr>
+            <tr>
+              <td>Terminal, keyboard, and window-mirror content</td>
+              <td>Display and control shells, coding agents, and an optional Mac window in XR.</td>
+              <td>Travels directly between the headset and your Mac over the local network using SSH-protected channels. It is not sent to the developer.</td>
+            </tr>
+            <tr>
+              <td>Firebase anonymous account and app attestation</td>
+              <td>Protect paid voice services from abuse and associate subscription access with an installation.</td>
+              <td>Processed by Google Firebase Authentication, App Check, Cloud Functions, and Firestore.</td>
+            </tr>
+            <tr>
+              <td>Google Play purchase information</td>
+              <td>Verify, acknowledge, restore, renew, or revoke Orb XR Pro access.</td>
+              <td>Processed by Google Play and the app's Firebase backend. The backend stores entitlement status, expiry, product ID, and purchase-token association.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Voice AI services</h2>
+      <p>Voice features are optional and inactive until you choose to use them. They may use:</p>
+      <ul>
+        <li><strong>Deepgram</strong> for speech-to-text. Requests opt out of Deepgram's model-improvement program.</li>
+        <li><strong>Google Gemini and Firebase AI services</strong> for voice commands and text-to-speech responses.</li>
+      </ul>
+      <p>
+        These providers process requests under their own policies:
+        <a href="https://deepgram.com/privacy-policy">Deepgram Privacy Policy</a> and
+        <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.
+      </p>
+
+      <h2>Data we do not collect</h2>
+      <ul>
+        <li>No advertising identifiers, advertising SDKs, or sale of personal data.</li>
+        <li>No developer access to your terminal commands, files, agent output, mirrored windows, or SSH private keys.</li>
+        <li>No camera recordings or stored microphone recordings.</li>
+        <li>No account profile requiring your name, email address, or phone number.</li>
+      </ul>
+
+      <h2>Retention and deletion</h2>
+      <p>
+        Pairing details and generated keys remain on the headset until you use "Forget this Mac" or
+        uninstall the app. Terminal content is retained only in active terminal scrollback and in
+        any host-side tmux sessions you control on your Mac.
+      </p>
+      <p>
+        Firebase may retain an anonymous installation identifier and entitlement record used for
+        access control and purchase restoration. Google Play retains purchase records under its
+        own policies and legal obligations. To request deletion of developer-controlled backend
+        records, contact the address below.
+      </p>
+
+      <h2>Security</h2>
+      <p>
+        Pairing verifies the Mac's SSH host fingerprint when available. Secrets for Deepgram,
+        Gemini, and Google Play verification remain on the server and are not embedded in the app.
+      </p>
+
+      <h2>Children's privacy</h2>
+      <p>Orb XR is a developer productivity tool and is not directed to children.</p>
+
+      <h2>Changes</h2>
+      <p>Updates to this policy will be published at this URL with a revised date.</p>
+
+      <h2>Contact</h2>
+      <p>Privacy questions or deletion requests: <a href="mailto:nik.anand.1998@gmail.com">nik.anand.1998@gmail.com</a></p>
+    </article>
+
+    <footer>
+      <span>ORB XR / PRIVACY POLICY</span>
+      <span>© 2026 Orb XR</span>
+    </footer>
+  </main>
+</body>
+</html>

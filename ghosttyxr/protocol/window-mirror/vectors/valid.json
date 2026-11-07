@@ -1,0 +1,584 @@
+{
+  "description": "Frozen valid window-mirror frames. completeBytes means full frame hex is canonical; otherwise compare headerBytes + structural payload JSON.",
+  "cases": [
+    {
+      "name": "android_hello",
+      "frame": "hello",
+      "direction": "headset_to_mac",
+      "transport": "bootstrap",
+      "completeBytes": "0101000000307b22726f6c65223a2268656164736574222c22617070223a2267686f737474797872222c2276657273696f6e223a357d",
+      "payload": {
+        "role": "headset",
+        "app": "ghosttyxr",
+        "version": 5
+      },
+      "expected": {
+        "role": "headset",
+        "version": 5
+      }
+    },
+    {
+      "name": "mac_hello",
+      "frame": "hello",
+      "direction": "mac_to_headset",
+      "transport": "bootstrap",
+      "completeBytes": "0101000000367b22726f6c65223a226d6163222c22617070223a2267686f7374747978722d636f6d70616e696f6e222c2276657273696f6e223a357d",
+      "payload": {
+        "role": "mac",
+        "app": "ghosttyxr-companion",
+        "version": 5
+      },
+      "expected": {
+        "role": "mac",
+        "version": 5
+      }
+    },
+    {
+      "name": "legacy_hello_missing_version",
+      "frame": "hello",
+      "direction": "mac_to_headset",
+      "transport": "bootstrap",
+      "completeBytes": "01010000002a7b22726f6c65223a226d6163222c22617070223a2267686f7374747978722d636f6d70616e696f6e227d",
+      "payload": {
+        "role": "mac",
+        "app": "ghosttyxr-companion"
+      },
+      "expected": {
+        "role": "mac",
+        "version": 1
+      }
+    },
+    {
+      "name": "ping",
+      "frame": "ping",
+      "direction": "both",
+      "transport": "bootstrap_or_reliable_control",
+      "completeBytes": "010300000000",
+      "expected": {
+        "type": "ping"
+      }
+    },
+    {
+      "name": "pong",
+      "frame": "pong",
+      "direction": "both",
+      "transport": "bootstrap_or_reliable_control",
+      "completeBytes": "010400000000",
+      "expected": {
+        "type": "pong"
+      }
+    },
+    {
+      "name": "ready",
+      "frame": "ready",
+      "direction": "reserved_legacy",
+      "transport": "bootstrap",
+      "completeBytes": "010200000000",
+      "expected": {
+        "type": "ready"
+      }
+    },
+    {
+      "name": "reset",
+      "frame": "reset",
+      "direction": "reserved_legacy",
+      "transport": "reliable_control",
+      "completeBytes": "010a00000000",
+      "expected": {
+        "type": "reset"
+      }
+    },
+    {
+      "name": "metadata_window",
+      "frame": "metadata",
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "completeBytes": "01050000007e7b226964223a34322c227469746c65223a22417070222c22617070223a22536166617269222c227769647468223a313238302c22686569676874223a3732302c227363616c65223a322e302c22696e746572616374697665223a747275652c226b696e64223a2277696e646f77222c22636f646563223a2268323634227d",
+      "payload": {
+        "id": 42,
+        "title": "App",
+        "app": "Safari",
+        "width": 1280,
+        "height": 720,
+        "scale": 2.0,
+        "interactive": true,
+        "kind": "window",
+        "codec": "h264"
+      },
+      "expected": {
+        "id": 42,
+        "title": "App",
+        "app": "Safari",
+        "width": 1280,
+        "height": 720,
+        "scale": 2.0,
+        "interactive": true,
+        "kind": "window",
+        "codec": "h264"
+      }
+    },
+    {
+      "name": "metadata_display",
+      "frame": "metadata",
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "completeBytes": "0105000000807b226964223a312c227469746c65223a224d61632053637265656e222c22617070223a22222c227769647468223a313732382c22686569676874223a313131372c227363616c65223a322e302c22696e746572616374697665223a747275652c226b696e64223a22646973706c6179222c22636f646563223a2268323634227d",
+      "payload": {
+        "id": 1,
+        "title": "Mac Screen",
+        "app": "",
+        "width": 1728,
+        "height": 1117,
+        "scale": 2.0,
+        "interactive": true,
+        "kind": "display",
+        "codec": "h264"
+      },
+      "expected": {
+        "id": 1,
+        "kind": "display",
+        "codec": "h264",
+        "title": "Mac Screen",
+        "isDisplayShare": true
+      }
+    },
+    {
+      "name": "metadata_defaults",
+      "frame": "metadata",
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "completeBytes": "0105000000537b226964223a312c227469746c65223a2254222c22617070223a2241222c227769647468223a31302c22686569676874223a31302c227363616c65223a312c22696e746572616374697665223a66616c73657d",
+      "payload": {
+        "id": 1,
+        "title": "T",
+        "app": "A",
+        "width": 10,
+        "height": 10,
+        "scale": 1,
+        "interactive": false
+      },
+      "expected": {
+        "id": 1,
+        "kind": "window",
+        "codec": "h264",
+        "width": 10,
+        "height": 10
+      }
+    },
+    {
+      "name": "stream_state",
+      "frame": "streamState",
+      "direction": "mac_to_headset",
+      "transport": "bootstrap_or_reliable_control",
+      "completeBytes": "0108000000507b22737461747573223a2273747265616d696e67222c2264657461696c223a226f6b222c22696e746572616374697665223a747275652c227472616e73706f7274223a226469726563742d746370227d",
+      "payload": {
+        "status": "streaming",
+        "detail": "ok",
+        "interactive": true,
+        "transport": "direct-tcp"
+      },
+      "expected": {
+        "status": "streaming",
+        "detail": "ok",
+        "interactive": true,
+        "transport": "direct-tcp"
+      }
+    },
+    {
+      "name": "close_with_reason",
+      "frame": "close",
+      "direction": "both",
+      "transport": "bootstrap_or_reliable_control",
+      "completeBytes": "0109000000107b22726561736f6e223a22627965227d",
+      "payload": {
+        "reason": "bye"
+      },
+      "expected": {
+        "reason": "bye"
+      }
+    },
+    {
+      "name": "close_without_reason",
+      "frame": "close",
+      "direction": "both",
+      "transport": "bootstrap_or_reliable_control",
+      "completeBytes": "0109000000027b7d",
+      "payload": {},
+      "expected": {
+        "reason": null
+      }
+    },
+    {
+      "name": "input_pointer",
+      "frame": "input",
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "completeBytes": "0107000000447b226b696e64223a22706f696e746572222c22616374696f6e223a22646f776e222c22627574746f6e223a226c656674222c2278223a302e32352c2279223a302e37357d",
+      "payload": {
+        "kind": "pointer",
+        "action": "down",
+        "button": "left",
+        "x": 0.25,
+        "y": 0.75
+      },
+      "expected": {
+        "kind": "pointer",
+        "action": "down",
+        "x": 0.25,
+        "y": 0.75
+      },
+      "androidBehavior": "outbound_only"
+    },
+    {
+      "name": "input_scroll",
+      "frame": "input",
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "completeBytes": "0107000000307b226b696e64223a227363726f6c6c222c2278223a302e352c2279223a302e352c226478223a302c226479223a31327d",
+      "payload": {
+        "kind": "scroll",
+        "x": 0.5,
+        "y": 0.5,
+        "dx": 0,
+        "dy": 12
+      },
+      "expected": {
+        "kind": "scroll",
+        "dx": 0,
+        "dy": 12
+      }
+    },
+    {
+      "name": "input_key",
+      "frame": "input",
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "completeBytes": "0107000000417b226b696e64223a226b6579222c22616374696f6e223a227072657373222c22636f6465223a224b657941222c226d6f6473223a302c2274657874223a2261227d",
+      "payload": {
+        "kind": "key",
+        "action": "press",
+        "code": "KeyA",
+        "mods": 0,
+        "text": "a"
+      },
+      "expected": {
+        "kind": "key",
+        "action": "press",
+        "code": "KeyA",
+        "mods": 0,
+        "text": "a"
+      }
+    },
+    {
+      "name": "pointer_handoff",
+      "frame": "pointerHandoff",
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "completeBytes": "010e000000217b22736571223a312c2265646765223a227269676874222c2279223a302e34327d",
+      "payload": {
+        "seq": 1,
+        "edge": "right",
+        "y": 0.42
+      },
+      "expected": {
+        "seq": 1,
+        "edge": "right",
+        "y": 0.42
+      }
+    },
+    {
+      "name": "pointer_return",
+      "frame": "pointerReturn",
+      "direction": "both",
+      "transport": "reliable_control",
+      "completeBytes": "010f000000117b2278223a302e392c2279223a302e317d",
+      "payload": {
+        "x": 0.9,
+        "y": 0.1
+      },
+      "expected": {
+        "x": 0.9,
+        "y": 0.1
+      },
+      "androidInbound": "reclaim_ignore_coordinates"
+    },
+    {
+      "name": "mouse_delta",
+      "frame": "mouseDelta",
+      "direction": "mac_to_headset",
+      "transport": "lossy_motion",
+      "completeBytes": "010b0000001c7b22736571223a322c226478223a332e352c226479223a2d322e307d",
+      "payload": {
+        "seq": 2,
+        "dx": 3.5,
+        "dy": -2.0
+      },
+      "expected": {
+        "seq": 2,
+        "dx": 3.5,
+        "dy": -2.0
+      }
+    },
+    {
+      "name": "mouse_delta_untracked_seq",
+      "frame": "mouseDelta",
+      "direction": "mac_to_headset",
+      "transport": "lossy_motion",
+      "completeBytes": "010b0000000f7b226478223a312c226479223a317d",
+      "payload": {
+        "dx": 1,
+        "dy": 1
+      },
+      "expected": {
+        "seq": 0,
+        "dx": 1.0,
+        "dy": 1.0
+      }
+    },
+    {
+      "name": "mouse_button",
+      "frame": "mouseButton",
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "completeBytes": "010c000000297b22736571223a332c22627574746f6e223a226c656674222c22616374696f6e223a22646f776e227d",
+      "payload": {
+        "seq": 3,
+        "button": "left",
+        "action": "down"
+      },
+      "expected": {
+        "seq": 3,
+        "button": "left",
+        "action": "down"
+      }
+    },
+    {
+      "name": "mouse_scroll",
+      "frame": "mouseScroll",
+      "direction": "mac_to_headset",
+      "transport": "lossy_motion",
+      "completeBytes": "010d0000001c7b22736571223a342c226478223a302e302c226479223a31322e307d",
+      "payload": {
+        "seq": 4,
+        "dx": 0.0,
+        "dy": 12.0
+      },
+      "expected": {
+        "seq": 4,
+        "dx": 0.0,
+        "dy": 12.0
+      }
+    },
+    {
+      "name": "media_session",
+      "frame": "mediaSession",
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "completeBytes": "0116000000567b22746f6b656e223a22746f6b2d616263222c22686f7374223a223139322e3136382e312e3230222c22706f7274223a34353837362c22636f646563223a2268657663222c22656e63727970746564223a747275657d",
+      "payload": {
+        "token": "tok-abc",
+        "host": "192.168.1.20",
+        "port": 45876,
+        "codec": "hevc",
+        "encrypted": true
+      },
+      "expected": {
+        "token": "tok-abc",
+        "host": "192.168.1.20",
+        "port": 45876,
+        "codec": "hevc",
+        "encrypted": true
+      }
+    },
+    {
+      "name": "media_session_defaults",
+      "frame": "mediaSession",
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "completeBytes": "01160000001f7b22746f6b656e223a2274222c22686f7374223a2231302e302e302e32227d",
+      "payload": {
+        "token": "t",
+        "host": "10.0.0.2"
+      },
+      "expected": {
+        "token": "t",
+        "host": "10.0.0.2",
+        "port": 45876,
+        "codec": "h264",
+        "encrypted": true
+      }
+    },
+    {
+      "name": "media_hello",
+      "frame": "mediaHello",
+      "direction": "headset_to_mac",
+      "transport": "media",
+      "completeBytes": "0115000000137b22746f6b656e223a22746f6b2d616263227d",
+      "payload": {
+        "token": "tok-abc"
+      },
+      "expected": {
+        "token": "tok-abc"
+      }
+    },
+    {
+      "name": "codec_support",
+      "frame": "codecSupport",
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "completeBytes": "01170000002c7b22636f64656373223a5b2268323634222c2268657663225d2c226c6f774c6174656e6379223a747275657d",
+      "payload": {
+        "codecs": [
+          "h264",
+          "hevc"
+        ],
+        "lowLatency": true
+      },
+      "expected": {
+        "codecs": [
+          "h264",
+          "hevc"
+        ],
+        "lowLatency": true
+      }
+    },
+    {
+      "name": "codec_support_defaults",
+      "frame": "codecSupport",
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "completeBytes": "0117000000027b7d",
+      "payload": {},
+      "expected": {
+        "codecs": [
+          "h264"
+        ]
+      }
+    },
+    {
+      "name": "key_frame_request",
+      "frame": "keyFrameRequest",
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "completeBytes": "0118000000107b22726561736f6e223a22676170227d",
+      "payload": {
+        "reason": "gap"
+      },
+      "expected": {
+        "reason": "gap"
+      }
+    },
+    {
+      "name": "key_frame_request_defaults",
+      "frame": "keyFrameRequest",
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "completeBytes": "0118000000027b7d",
+      "payload": {},
+      "expected": {
+        "reason": "corruption"
+      }
+    },
+    {
+      "name": "latency_report",
+      "frame": "latencyReport",
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "completeBytes": "01190000003a7b22656e64546f456e644d73223a34322e352c226465636f646564467073223a39302e302c226465636f646551756575654465707468223a317d",
+      "payload": {
+        "endToEndMs": 42.5,
+        "decodedFps": 90.0,
+        "decodeQueueDepth": 1
+      },
+      "expected": {
+        "endToEndMs": 42.5,
+        "decodedFps": 90.0,
+        "decodeQueueDepth": 1
+      }
+    },
+    {
+      "name": "video_slice_key_frame",
+      "frame": "videoSlice",
+      "direction": "mac_to_headset",
+      "transport": "media",
+      "completeBytes": "011400000021000000000000000100000000000003e8078004380000000201000000000165aabb",
+      "expected": {
+        "sequence": 1,
+        "ptsUs": 1000,
+        "width": 1920,
+        "height": 1080,
+        "sliceIndex": 0,
+        "sliceCount": 2,
+        "isKeyFrame": true,
+        "isFrameEnd": false,
+        "bitstreamHex": "0000000165aabb"
+      },
+      "note": "Slice 0 of 2: keyframe, not yet the end of the frame. Bitstream is Annex-B."
+    },
+    {
+      "name": "video_slice_frame_end",
+      "frame": "videoSlice",
+      "direction": "mac_to_headset",
+      "transport": "media",
+      "completeBytes": "011400000020000000000000000200000000000007d0078004380001000202000000000141cc",
+      "expected": {
+        "sequence": 2,
+        "ptsUs": 2000,
+        "width": 1920,
+        "height": 1080,
+        "sliceIndex": 1,
+        "sliceCount": 2,
+        "isKeyFrame": false,
+        "isFrameEnd": true,
+        "bitstreamHex": "0000000141cc"
+      }
+    },
+    {
+      "name": "multiple_frames_one_chunk",
+      "frame": "mixed",
+      "direction": "both",
+      "transport": "bootstrap",
+      "completeBytes": "0103000000000104000000000101000000307b22726f6c65223a2268656164736574222c22617070223a2267686f737474797872222c2276657273696f6e223a357d",
+      "expectedFrameSequence": [
+        "ping",
+        "pong",
+        "hello"
+      ],
+      "fragmentation": "single_chunk"
+    },
+    {
+      "name": "header_split_byte_by_byte",
+      "frame": "ping",
+      "direction": "both",
+      "transport": "bootstrap",
+      "completeBytes": "010300000000",
+      "chunkSizes": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "expectedFrameSequence": [
+        "ping"
+      ]
+    },
+    {
+      "name": "payload_split_across_chunks",
+      "frame": "android_hello",
+      "direction": "headset_to_mac",
+      "transport": "bootstrap",
+      "completeBytes": "0101000000307b22726f6c65223a2268656164736574222c22617070223a2267686f737474797872222c2276657273696f6e223a357d",
+      "chunkSizes": [
+        3,
+        3,
+        10,
+        9999
+      ],
+      "expectedFrameSequence": [
+        "hello"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  global:
+    Java_*;
+    ghosttyxr_*;
+  local:
+    *;
+};

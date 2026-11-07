@@ -1,0 +1,18 @@
+{
+  "images": [
+    {
+      "filename": "GxrIconTerminals.png",
+      "idiom": "universal",
+      "scale": "1x"
+    },
+    {
+      "filename": "GxrIconTerminals@2x.png",
+      "idiom": "universal",
+      "scale": "2x"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Orb XR</string>
+	<key>CFBundleExecutable</key>
+	<string>GhosttyXRCompanion</string>
+	<key>CFBundleIdentifier</key>
+	<string>dev.ghosttyxr.companion</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Orb XR</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<false/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Orb XR connects directly to the paired Galaxy XR headset for encrypted, low-latency Mac screen mirroring.</string>
+	<key>NSInputMonitoringUsageDescription</key>
+	<string>Orb XR captures your Mac keyboard only when you start forwarding, then sends those keystrokes through SSH to the focused Orb XR terminal in your Galaxy XR headset.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Orb XR captures only the Mac window you choose so Orb XR can mirror it in your Galaxy XR headset.</string>
+</dict>
+</plist>

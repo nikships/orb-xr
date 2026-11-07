@@ -1,0 +1,79 @@
+# Build artifacts — too large for git, regenerable
+ghosttyxr/zig-src/.zig-cache/
+ghosttyxr/zig-src/zig-out/
+ghosttyxr/zig-src/zig-pkg/
+# Nested Zig caches: vendored wrappers (e.g. src/vendor/mbedtls/) resolve
+# their own package deps relative to their directory, so build junk can land
+# one level deeper than the top-level rules above.
+ghosttyxr/zig-src/src/vendor/*/.zig-cache/
+ghosttyxr/zig-src/src/vendor/*/zig-pkg/
+ghosttyxr/android/.gradle/
+ghosttyxr/android/build/
+ghosttyxr/android/**/build/
+ghosttyxr/mac-companion/**/build/
+ghosttyxr/mac-companion/**/build-*/
+ghosttyxr/mac-companion/**/.build/
+ghosttyxr/mac-companion/**/DerivedData/
+ghosttyxr/mac-companion/**/*.app
+ghosttyxr/mac-companion/**/*.xcodeproj
+ghosttyxr/mac-companion/**/GhosttyXRCompanion-notarize.zip
+ghosttyxr/mac-companion/**/OrbXR-*.zip
+ghosttyxr/mac-companion/**/OrbXR-*.zip.sha256
+
+# Node deps anywhere (Electron, tooling, Firebase already has its own)
+node_modules/
+
+# Electron companion deps + build outputs (npm install / package / tests)
+ghosttyxr/mac-companion/electron/node_modules/
+ghosttyxr/mac-companion/electron/out/
+ghosttyxr/mac-companion/electron/.vite/
+ghosttyxr/mac-companion/electron/test-results/
+
+
+# Compiled native library is checked in so Android-only clones don't need
+# the Zig toolchain + NDK to build the app. Rebuild via `zig build jni
+# -Dssh=true` in zig-src/ when the native sources change.
+
+# Local Android SDK pointer — machine-specific absolute path
+ghosttyxr/android/local.properties
+
+# Local credentials and signing material
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.p8
+
+# Firebase per-project config for the Gemini Live voice-command feature.
+# Checked in so release builds (release-debug.sh) package the Firebase project
+# config and the voice-command feature works out of the box from a fresh clone.
+# The Firebase Web API key inside is a client identifier by Google's design
+# (security is enforced via Firebase Security Rules / API restrictions), and
+# this is a private repo, so committing it is safe.
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Agent / harness state
+!.factory/
+**/scheduled_tasks.lock
+**/.factory/
+**/.claude/scheduled_tasks.lock
+.air/
+.lavish/
+
+# Chuchu reference source — kept locally for porting reference, not part of our repo
+chuchu/
+
+# QA artifacts (regenerated each test run)
+/tmp/ghosttyxr-qa/
+
+# Python cache (asset renderer)
+__pycache__/
+*.pyc

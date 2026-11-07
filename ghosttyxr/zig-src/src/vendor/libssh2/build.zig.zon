@@ -1,0 +1,23 @@
+.{
+    .name = .libssh2,
+    .version = "1.11.1",
+    .fingerprint = 0x57bdea04f02d2d28,
+    .dependencies = .{
+        .libssh2_upstream = .{
+            .url = "https://github.com/libssh2/libssh2/archive/refs/tags/libssh2-1.11.1.tar.gz",
+            .hash = "N-V-__8AAATRLQBu_rNy4X2UK6RtcdYK_yAzkV6OcCqgo5aK",
+        },
+        // anand-92/openssl-zig branch zig-0.16 (jossephus/openssl-zig zig-pkg
+        // plus the Zig 0.16 stdlib renames). Must stay byte-identical to the
+        // top-level ghosttyxr build.zig.zon pin so both sides resolve a single
+        // openssl artifact.
+        .openssl = .{
+            .url = "git+https://github.com/anand-92/openssl-zig?ref=zig-0.16#d4096dc34dac6f9f556fa35fc942c2f77a8e92d3",
+            .hash = "openssl-3.6.0-wZcA750o8gGtMDeNlToZiyPOwGlCof58gfgK-e4a_mKE",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+    },
+}

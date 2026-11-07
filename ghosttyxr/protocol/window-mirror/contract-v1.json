@@ -1,0 +1,563 @@
+{
+  "name": "window-mirror",
+  "description": "Cross-platform compatibility contract for GhosttyXR window-mirror framing and payloads. Kotlin and Swift adapters implement this contract; frozen vectors prove both sides agree.",
+  "relayPort": 45874,
+  "mediaPort": 45876,
+  "wireVersion": 1,
+  "featureVersion": 5,
+  "headerBytes": 6,
+  "maxFrameBytes": 8388608,
+  "headerLayout": [
+    {
+      "offset": 0,
+      "size": 1,
+      "name": "wireVersion",
+      "endian": "n/a"
+    },
+    {
+      "offset": 1,
+      "size": 1,
+      "name": "frameType",
+      "endian": "n/a"
+    },
+    {
+      "offset": 2,
+      "size": 4,
+      "name": "payloadLength",
+      "endian": "big"
+    }
+  ],
+  "featureNegotiation": {
+    "field": "hello.version",
+    "missingDecodesAs": 1,
+    "minimumAccepted": 5,
+    "rejectBehavior": "close_connection_with_upgrade_reason"
+  },
+  "mediaTransport": {
+    "description": "Feature version 5 carries video on a dedicated direct LAN TCP socket instead of WebRTC. The control channel (relayPort, over the authenticated SSH tunnel) negotiates it.",
+    "port": 45876,
+    "socketOptions": [
+      "TCP_NODELAY"
+    ],
+    "framing": "Same 6-byte header as the control channel. Video rides frame id 20 (videoSlice) with a fixed-size binary sub-header, not JSON.",
+    "auth": "Headset sends mediaHello (id 21) with the token from mediaSession (id 22). The Mac closes the socket on mismatch. The token is minted per stream, delivered only over the SSH-authenticated control channel, and never guessed or defaulted.",
+    "encryption": "AES-GCM over the videoSlice payload, keyed by the mediaSession token, when mediaSession.encrypted is true. Users may disable it on a trusted LAN; the token itself never crosses the wire in cleartext because the control channel is always SSH-encrypted.",
+    "rationale": "Matches the Virtual Desktop Streamer architecture: no jitter buffer, no pacer, no congestion controller. Latency stays bounded because little is ever in flight (small DataRateLimits window plus slice-sized writes) rather than because a buffer absorbs jitter."
+  },
+  "defaults": {
+    "hello.version": 1,
+    "metadata.kind": "window",
+    "metadata.codec": "h264",
+    "metadata.id": 0,
+    "metadata.width": 1,
+    "metadata.height": 1,
+    "metadata.scale": 1.0,
+    "metadata.interactive": false,
+    "metadata.title": "",
+    "metadata.app": "",
+    "streamState.interactive": false,
+    "mouse.seq": 0,
+    "mouseButton.button": "left",
+    "pointerHandoff.edge": "right",
+    "pointerHandoff.y": 0.5,
+    "mediaSession.port": 45876,
+    "mediaSession.codec": "h264",
+    "mediaSession.encrypted": true,
+    "codecSupport.codecs": [
+      "h264"
+    ],
+    "keyFrameRequest.reason": "corruption",
+    "latencyReport.decodeQueueDepth": 0,
+    "videoSlice.flags": 0
+  },
+  "rules": [
+    "Unknown frame type IDs within wire version 1 are protocol errors that reset the decoder.",
+    "Wrong wire version resets the decoder.",
+    "Declared payload length greater than maxFrameBytes resets the decoder.",
+    "Truncated headers or payloads wait for more bytes without resetting.",
+    "Malformed JSON payloads are message errors; framing decoder state is unaffected when the frame already parsed.",
+    "Input frames are outbound-only on the headset adapter (Android rejects inbound Input).",
+    "mediaSession requires a non-empty token; the headset never invents or defaults one.",
+    "videoSlice payloads are binary, not JSON, and carry a fixed 26-byte sub-header ahead of the bitstream.",
+    "A headset that cannot decode mediaSession.codec must fail loudly rather than silently render nothing.",
+    "The Mac picks a codec only from the intersection of codecSupport.codecs and the user preference; an empty intersection is a surfaced error, never a silent fallback.",
+    "Mac pointerReturn reclaims the headset cursor; Android ignores payload coordinates on inbound PointerReturn.",
+    "JSON object key order is not part of compatibility; compare headers exactly and JSON structurally unless a vector freezes complete bytes."
+  ],
+  "frames": [
+    {
+      "name": "hello",
+      "id": 1,
+      "direction": "both",
+      "transport": "bootstrap",
+      "required": [
+        "role",
+        "app"
+      ],
+      "optional": [
+        "version"
+      ],
+      "fields": {
+        "role": {
+          "type": "string"
+        },
+        "app": {
+          "type": "string"
+        },
+        "version": {
+          "type": "int",
+          "default": 1,
+          "note": "feature version; missing decodes as 1"
+        }
+      }
+    },
+    {
+      "name": "ready",
+      "id": 2,
+      "direction": "reserved_legacy",
+      "transport": "bootstrap",
+      "payload": "empty_or_ignored"
+    },
+    {
+      "name": "ping",
+      "id": 3,
+      "direction": "both",
+      "transport": "bootstrap_or_reliable_control",
+      "payload": "empty"
+    },
+    {
+      "name": "pong",
+      "id": 4,
+      "direction": "both",
+      "transport": "bootstrap_or_reliable_control",
+      "payload": "empty"
+    },
+    {
+      "name": "metadata",
+      "id": 5,
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "fields": {
+        "id": {
+          "type": "uint32",
+          "default": 0
+        },
+        "title": {
+          "type": "string",
+          "default": ""
+        },
+        "app": {
+          "type": "string",
+          "default": ""
+        },
+        "width": {
+          "type": "int",
+          "default": 1
+        },
+        "height": {
+          "type": "int",
+          "default": 1
+        },
+        "scale": {
+          "type": "double",
+          "default": 1.0
+        },
+        "interactive": {
+          "type": "bool",
+          "default": false
+        },
+        "kind": {
+          "type": "string",
+          "default": "window",
+          "values": [
+            "window",
+            "display"
+          ]
+        },
+        "codec": {
+          "type": "string",
+          "default": "h264"
+        }
+      }
+    },
+    {
+      "name": "input",
+      "id": 7,
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "fields": {
+        "kind": {
+          "type": "string",
+          "values": [
+            "pointer",
+            "scroll",
+            "key"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "optional": true
+        },
+        "x": {
+          "type": "double",
+          "optional": true
+        },
+        "y": {
+          "type": "double",
+          "optional": true
+        },
+        "dx": {
+          "type": "double",
+          "optional": true
+        },
+        "dy": {
+          "type": "double",
+          "optional": true
+        },
+        "button": {
+          "type": "string",
+          "optional": true
+        },
+        "code": {
+          "type": "string",
+          "optional": true
+        },
+        "text": {
+          "type": "string",
+          "optional": true
+        },
+        "mods": {
+          "type": "int",
+          "optional": true
+        }
+      }
+    },
+    {
+      "name": "streamState",
+      "id": 8,
+      "direction": "mac_to_headset",
+      "transport": "bootstrap_or_reliable_control",
+      "fields": {
+        "status": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string",
+          "optional": true
+        },
+        "interactive": {
+          "type": "bool",
+          "default": false
+        },
+        "transport": {
+          "type": "string",
+          "optional": true
+        }
+      }
+    },
+    {
+      "name": "close",
+      "id": 9,
+      "direction": "both",
+      "transport": "bootstrap_or_reliable_control",
+      "fields": {
+        "reason": {
+          "type": "string",
+          "optional": true
+        }
+      }
+    },
+    {
+      "name": "reset",
+      "id": 10,
+      "direction": "reserved_legacy",
+      "transport": "reliable_control",
+      "payload": "empty_or_ignored"
+    },
+    {
+      "name": "mouseDelta",
+      "id": 11,
+      "direction": "mac_to_headset",
+      "transport": "lossy_motion",
+      "fields": {
+        "seq": {
+          "type": "int",
+          "default": 0,
+          "note": "0 means untracked / pre-sequencing peer"
+        },
+        "dx": {
+          "type": "double"
+        },
+        "dy": {
+          "type": "double"
+        }
+      }
+    },
+    {
+      "name": "mouseButton",
+      "id": 12,
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "fields": {
+        "seq": {
+          "type": "int",
+          "default": 0
+        },
+        "button": {
+          "type": "string",
+          "default": "left"
+        },
+        "action": {
+          "type": "string",
+          "values": [
+            "down",
+            "up"
+          ]
+        }
+      }
+    },
+    {
+      "name": "mouseScroll",
+      "id": 13,
+      "direction": "mac_to_headset",
+      "transport": "lossy_motion",
+      "fields": {
+        "seq": {
+          "type": "int",
+          "default": 0
+        },
+        "dx": {
+          "type": "double"
+        },
+        "dy": {
+          "type": "double"
+        }
+      }
+    },
+    {
+      "name": "pointerHandoff",
+      "id": 14,
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "fields": {
+        "seq": {
+          "type": "int",
+          "default": 0
+        },
+        "edge": {
+          "type": "string",
+          "default": "right",
+          "values": [
+            "left",
+            "right"
+          ]
+        },
+        "y": {
+          "type": "double",
+          "default": 0.5
+        }
+      }
+    },
+    {
+      "name": "pointerReturn",
+      "id": 15,
+      "direction": "both",
+      "transport": "reliable_control",
+      "fields": {
+        "x": {
+          "type": "double"
+        },
+        "y": {
+          "type": "double"
+        }
+      },
+      "notes": [
+        "Headset \u2192 Mac: XR cursor re-entered the mirror; Mac takes ownership at x/y.",
+        "Mac \u2192 headset: force-reclaim; Android ignores coordinates and clears XR cursor ownership."
+      ]
+    },
+    {
+      "name": "videoSlice",
+      "id": 20,
+      "direction": "mac_to_headset",
+      "transport": "media",
+      "payload": "binary",
+      "subHeaderBytes": 26,
+      "subHeaderLayout": [
+        {
+          "offset": 0,
+          "size": 8,
+          "name": "sequence",
+          "endian": "big",
+          "note": "monotonic per stream from 1; a gap means loss and triggers a keyFrameRequest"
+        },
+        {
+          "offset": 8,
+          "size": 8,
+          "name": "ptsUs",
+          "endian": "big"
+        },
+        {
+          "offset": 16,
+          "size": 2,
+          "name": "width",
+          "endian": "big"
+        },
+        {
+          "offset": 18,
+          "size": 2,
+          "name": "height",
+          "endian": "big"
+        },
+        {
+          "offset": 20,
+          "size": 2,
+          "name": "sliceIndex",
+          "endian": "big"
+        },
+        {
+          "offset": 22,
+          "size": 2,
+          "name": "sliceCount",
+          "endian": "big"
+        },
+        {
+          "offset": 24,
+          "size": 1,
+          "name": "flags",
+          "endian": "n/a",
+          "bits": {
+            "0x01": "keyFrame",
+            "0x02": "frameEnd — last slice of this frame"
+          }
+        },
+        {
+          "offset": 25,
+          "size": 1,
+          "name": "reserved",
+          "endian": "n/a"
+        }
+      ],
+      "notes": [
+        "Bitstream is Annex-B with start codes; SPS/PPS (and VPS for HEVC) are repeated on every keyframe so a mid-stream join or resync never needs an out-of-band parameter set.",
+        "Written and flushed per slice so encode, transmit, and decode overlap instead of serializing.",
+        "When mediaSession.encrypted is true, everything after the sub-header is AES-GCM sealed."
+      ]
+    },
+    {
+      "name": "mediaHello",
+      "id": 21,
+      "direction": "headset_to_mac",
+      "transport": "media",
+      "required": [
+        "token"
+      ],
+      "fields": {
+        "token": {
+          "type": "string",
+          "required": true,
+          "note": "must equal the mediaSession token; mismatch closes the socket"
+        }
+      }
+    },
+    {
+      "name": "mediaSession",
+      "id": 22,
+      "direction": "mac_to_headset",
+      "transport": "reliable_control",
+      "required": [
+        "token",
+        "host"
+      ],
+      "fields": {
+        "token": {
+          "type": "string",
+          "required": true
+        },
+        "host": {
+          "type": "string",
+          "required": true,
+          "note": "Mac LAN IPv4; never fabricated"
+        },
+        "port": {
+          "type": "int",
+          "default": 45876
+        },
+        "codec": {
+          "type": "string",
+          "default": "h264",
+          "values": [
+            "h264",
+            "hevc"
+          ]
+        },
+        "encrypted": {
+          "type": "bool",
+          "default": true
+        }
+      }
+    },
+    {
+      "name": "codecSupport",
+      "id": 23,
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "fields": {
+        "codecs": {
+          "type": "string_array",
+          "default": [
+            "h264"
+          ],
+          "note": "codecs the headset actually has a hardware decoder for, probed via MediaCodecList"
+        },
+        "lowLatency": {
+          "type": "bool",
+          "optional": true,
+          "note": "true when a low-latency decoder variant was found"
+        }
+      }
+    },
+    {
+      "name": "keyFrameRequest",
+      "id": 24,
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "fields": {
+        "reason": {
+          "type": "string",
+          "default": "corruption",
+          "values": [
+            "corruption",
+            "gap",
+            "startup",
+            "resize"
+          ]
+        }
+      },
+      "notes": [
+        "Receiver-driven IDR. Replaces a periodic GOP so there is no recurring keyframe bitrate spike."
+      ]
+    },
+    {
+      "name": "latencyReport",
+      "id": 25,
+      "direction": "headset_to_mac",
+      "transport": "reliable_control",
+      "fields": {
+        "endToEndMs": {
+          "type": "double"
+        },
+        "decodedFps": {
+          "type": "double"
+        },
+        "decodeQueueDepth": {
+          "type": "int",
+          "default": 0
+        }
+      },
+      "notes": [
+        "Measured end-to-end latency is the control variable for bitrate adaptation, not packet loss alone."
+      ]
+    }
+  ]
+}

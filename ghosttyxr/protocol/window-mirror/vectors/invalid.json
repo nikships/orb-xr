@@ -1,0 +1,92 @@
+{
+  "description": "Malformed / incompatible window-mirror cases and expected recovery.",
+  "cases": [
+    {
+      "name": "wrong_wire_version",
+      "bytes": "020300000000",
+      "expected": "reject_and_reset_decoder",
+      "errorKind": "wire_version"
+    },
+    {
+      "name": "unknown_frame_id",
+      "bytes": "016300000000",
+      "expected": "reject_and_reset_decoder",
+      "errorKind": "unknown_frame"
+    },
+    {
+      "name": "oversized_declared_payload",
+      "bytes": "011400800001",
+      "expected": "reject_and_reset_decoder",
+      "errorKind": "oversized",
+      "note": "videoSlice (id 20) declaring one byte past the 8 MiB cap."
+    },
+    {
+      "name": "retired_webrtc_frame_id",
+      "bytes": "011000000000",
+      "expected": "reject_and_reset_decoder",
+      "errorKind": "unknown_frame",
+      "note": "Frame ids 16-19 were WebRTC offer/answer/ICE/restart in feature version 4 and are now unknown."
+    },
+    {
+      "name": "truncated_header",
+      "bytes": "010300",
+      "expected": "wait_for_more_bytes"
+    },
+    {
+      "name": "truncated_payload",
+      "bytes": "01030000000a61626364",
+      "expected": "wait_for_more_bytes"
+    },
+    {
+      "name": "malformed_json_metadata",
+      "bytes": "0105000000097b6e6f742d6a736f6e",
+      "expected": "reject_message_payload",
+      "errorKind": "malformed_json",
+      "note": "Frame framing succeeds; typed parse fails."
+    },
+    {
+      "name": "media_session_without_token",
+      "bytes": "0116000000137b22686f7374223a2231302e302e302e32227d",
+      "expected": "reject_message_payload",
+      "errorKind": "missing_token",
+      "note": "No silent fallbacks: an absent token is an error, never a guessed value."
+    },
+    {
+      "name": "media_session_without_host",
+      "bytes": "01160000000d7b22746f6b656e223a2274227d",
+      "expected": "reject_message_payload",
+      "errorKind": "missing_host",
+      "note": "Never fabricate a Mac address."
+    },
+    {
+      "name": "media_hello_without_token",
+      "bytes": "0115000000027b7d",
+      "expected": "reject_message_payload",
+      "errorKind": "missing_token"
+    },
+    {
+      "name": "video_slice_shorter_than_sub_header",
+      "bytes": "011400000004deadbeef",
+      "expected": "reject_message_payload",
+      "errorKind": "truncated_slice_header",
+      "note": "Framing succeeds; the 26-byte sub-header does not fit."
+    },
+    {
+      "name": "hello_feature_version_too_low",
+      "bytes": "0101000000307b22726f6c65223a2268656164736574222c22617070223a2267686f737474797872222c2276657273696f6e223a347d",
+      "expected": "reject_hello_insufficient_feature_version",
+      "featureVersion": 4,
+      "minimumAccepted": 5,
+      "note": "Feature version 4 was the WebRTC media era and is intentionally unsupported."
+    },
+    {
+      "name": "valid_frame_after_decoder_resetting_error",
+      "bytes": "020300000000010300000000",
+      "chunkPlan": "single_chunk_errors_then_recover_with_fresh_accept",
+      "resetTriggerHex": "020300000000",
+      "recoveryHex": "010300000000",
+      "expected": "reject_then_accept_after_reset",
+      "recoveryFrame": "ping"
+    }
+  ]
+}

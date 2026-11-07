@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Steer, don't alt-tab — three real CLIs, one glance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#0a0a0a; --card:#171717; --border: rgba(255,255,255,.10);
+    --primary:#f5f5f5; --muted-55: rgba(245,245,245,.55); --muted-40: rgba(245,245,245,.40); --muted-30: rgba(245,245,245,.30);
+    --amber:#fbbf24; --emerald:#34d399;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *,*::before,*::after{ box-sizing:border-box; min-width:0; }
+  html,body{ margin:0; background:var(--bg); color:var(--primary); font-family:var(--sans); }
+  body{ padding: 36px 24px 100px; }
+  .wrap{ max-width: 1320px; margin: 0 auto; }
+  h1{ font-size: 26px; letter-spacing:-.01em; margin: 0 0 6px; }
+  h2{ font-size: 17px; letter-spacing:-.01em; margin: 0 0 4px; }
+  p{ line-height:1.55; color: var(--muted-55); margin: 0; }
+  .eyebrow{ font: 600 11px var(--mono); text-transform:uppercase; letter-spacing:.12em; color: var(--muted-40); margin: 0 0 8px; }
+  .panel{ border-radius: 26px; background: var(--card); border: 1px solid var(--border); padding: 26px; margin-bottom: 18px; }
+
+  .refs{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+  .ref{ border-radius: 12px; overflow:hidden; border: 1px solid var(--border); }
+  .ref img{ display:block; width:100%; }
+  .ref-cap{ padding: 7px 10px; font: 500 10.5px var(--mono); color: var(--muted-30); background: rgba(255,255,255,.02); }
+
+  .tabbar{ display:flex; flex-wrap:wrap; gap: 6px; justify-content:center; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.05); border-radius: 999px; padding: 5px; width:fit-content; margin: 0 auto 22px; }
+  .tabbar button{ appearance:none; border:none; background:transparent; cursor:pointer; color: var(--muted-40); font: 500 12px var(--sans); padding: 7px 14px; border-radius: 999px; transition: all .15s ease; }
+  .tabbar button.active{ background: rgba(255,255,255,.1); color: var(--primary); }
+  .tabbar button:hover:not(.active){ color: var(--muted-55); }
+
+  .stage-cap{ text-align:center; font-size: 13px; color: var(--muted-55); margin-bottom: 18px; max-width: 620px; margin-left:auto; margin-right:auto; }
+  .stage-cap b{ color: var(--primary); }
+
+  .tri{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; align-items:start; }
+  @media (max-width: 980px){ .tri{ grid-template-columns: 1fr; } }
+
+  /* shared macOS-style window chrome */
+  .win{ border-radius: 12px; overflow:hidden; box-shadow: 0 22px 55px -18px rgba(0,0,0,.75); font-family: var(--mono); border: 1px solid rgba(0,0,0,.4); }
+  .win.needs{ box-shadow: 0 0 0 2px var(--amber), 0 22px 55px -18px rgba(0,0,0,.75); }
+  .titlebar{ background: linear-gradient(#e8e8e6,#dcdcda); display:flex; align-items:center; padding: 8px 12px; gap: 8px; position:relative; }
+  .tlights{ display:flex; gap:6px; }
+  .tlights span{ width:11px; height:11px; border-radius:50%; display:inline-block; }
+  .tlights .r{ background:#ec6a5f; } .tlights .y{ background:#f4bf4f; } .tlights .g{ background:#61c454; }
+  .wtitle{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font: 600 11.5px var(--sans); color:#4a4a48; white-space:nowrap; max-width:70%; overflow:hidden; text-overflow:ellipsis; }
+  .wtitle .ic{ margin-right:5px; }
+  .needs-flag{ margin-left:auto; display:flex; align-items:center; gap:4px; font:700 9px var(--mono); text-transform:uppercase; letter-spacing:.06em; color:#8a6200; background: rgba(251,191,36,.35); padding:3px 7px; border-radius:999px; z-index:1; }
+  .needs-flag .dot{ width:5px; height:5px; border-radius:50%; background:#8a6200; animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.25;} }
+
+  .cursor{ display:inline-block; width:6px; height:12px; background: currentColor; animation: blink 1s step-end infinite; vertical-align:-1px; margin-left:1px; }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  /* Claude Code pane */
+  .cc-body{ background: #0b1f1c; padding: 16px 16px 0; min-height: 320px; display:flex; flex-direction:column; }
+  .cc-head{ display:flex; align-items:flex-start; gap:12px; }
+  .cc-mascot{ width:44px; flex-shrink:0; image-rendering:pixelated; }
+  .cc-title{ font: 700 15px var(--sans); color:#f3f3f1; }
+  .cc-sub{ font-size:11.5px; color: rgba(243,243,241,.42); margin-top:2px; }
+  .cc-path{ font-size:10.5px; color: rgba(243,243,241,.3); margin-top:1px; }
+  .cc-hr{ height:1px; background: rgba(255,255,255,.08); margin: 14px 0; }
+  .cc-prompt{ background: rgba(255,255,255,.07); border-radius:6px; padding:8px 10px; font-size:12px; color:#f3f3f1; }
+  .cc-prompt .p{ color:#7fd7c4; margin-right:6px; }
+  .cc-status{ margin-top:10px; font-size:11.5px; color:#e8927c; display:flex; align-items:center; gap:6px; }
+  .cc-status.done{ color:#7fd7c4; }
+  .cc-status .dot{ width:5px; height:5px; border-radius:50%; background:currentColor; }
+  .cc-status.live .dot{ animation: pulse 1.2s ease-in-out infinite; }
+  .cc-foot{ margin-top:auto; border-top:1px solid rgba(255,255,255,.08); padding: 9px 0; display:flex; justify-content:space-between; gap:8px; font-size:10px; color: rgba(243,243,241,.35); }
+  .cc-foot span{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cc-foot b{ color:#e8927c; font-weight:500; }
+
+  /* Codex pane */
+  .cx-body{ background:#000; padding: 14px 14px 0; min-height:320px; display:flex; flex-direction:column; }
+  .cx-box{ border:1px solid rgba(255,255,255,.16); border-radius:8px; padding:10px 12px; }
+  .cx-box .hdr{ font:700 13px var(--mono); color:#f3f3f3; }
+  .cx-box .row{ margin-top:6px; font-size:11px; color: rgba(255,255,255,.4); }
+  .cx-box .row .key{ display:inline-block; width:62px; color: rgba(255,255,255,.4); }
+  .cx-box .row .val{ color: rgba(255,255,255,.85); }
+  .cx-box .row .link{ color:#6ecbf5; margin-left:8px; }
+  .cx-tip{ margin-top:12px; font-size:11px; color:#f3f3f3; font-weight:600; }
+  .cx-tip b{ font-weight:700; }
+  .cx-prompt{ margin-top:12px; background: rgba(255,255,255,.09); border-radius:5px; padding:7px 9px; font-size:11.5px; color:#f3f3f3; }
+  .cx-prompt .p{ color: rgba(255,255,255,.5); margin-right:6px; }
+  .cx-bullet{ margin-top:10px; font-size:11px; line-height:1.6; color: rgba(255,255,255,.55); display:flex; gap:7px; }
+  .cx-bullet::before{ content:"●"; font-size:7px; color: rgba(255,255,255,.35); margin-top:5px; flex-shrink:0; }
+  .cx-bullet .hl{ color:#6ecbf5; }
+  .cx-plan-title{ margin-top:12px; font:700 11px var(--mono); color:#f3f3f3; }
+  .cx-plan{ margin-top:5px; display:flex; flex-direction:column; gap:4px; padding-left:6px; }
+  .cx-plan-item{ font-size:10.5px; color: rgba(255,255,255,.45); display:flex; gap:5px; }
+  .cx-plan-item .tree{ color: rgba(255,255,255,.25); }
+  .cx-plan-item .hl{ color:#7ee081; }
+  .cx-steer{ margin-top:auto; padding: 12px 0; border-top:1px solid rgba(255,255,255,.1); display:flex; align-items:center; gap:8px; }
+  .cx-steer .p{ color:var(--amber); font-weight:700; font-size:12px; }
+  .cx-steer .txt{ color:#fff; font-size:12px; }
+
+  /* Gemini pane */
+  .gm-body{ background:#000; padding: 14px 14px 0; min-height:320px; display:flex; flex-direction:column; }
+  .gm-logo{ font: 800 21px var(--sans); letter-spacing:-.02em; background: linear-gradient(92deg,#4a8bf0 0%,#a06bea 45%,#e470b8 100%); -webkit-background-clip:text; background-clip:text; color:transparent; display:inline-block; }
+  .gm-prompt{ margin-top:10px; font-size:11.5px; color:#e58bd0; }
+  .gm-model{ margin-top:3px; font-size:10.5px; color: rgba(255,255,255,.35); font-style:italic; }
+  .gm-bullet{ margin-top:9px; font-size:11px; line-height:1.55; color: rgba(255,255,255,.65); display:flex; gap:6px; }
+  .gm-bullet .star{ color:#a06bea; flex-shrink:0; }
+  .gm-bullet .hl{ color:#6ecbf5; }
+  .gm-tool{ margin-top:10px; border:1px solid rgba(255,255,255,.14); border-radius:7px; padding:8px 10px; }
+  .gm-tool .t{ font-size:10.5px; color: rgba(255,255,255,.8); display:flex; gap:6px; }
+  .gm-tool .t .ck{ color:#7ee081; }
+  .gm-tool .code{ margin-top:6px; font-size:10.5px; color:#e8b34d; background: rgba(255,255,255,.03); border-radius:4px; padding:5px 7px; }
+  .gm-status{ margin-top:10px; font-size:11px; color: rgba(255,255,255,.5); display:flex; gap:6px; }
+  .gm-status .star{ color:#a06bea; }
+  .gm-input{ margin-top:auto; border:1px solid rgba(255,255,255,.15); border-radius:7px; padding:8px 10px; font-size:11px; color: rgba(255,255,255,.3); margin-bottom:10px; }
+  .gm-foot{ padding: 8px 0; border-top:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; gap:8px; font-size:9.5px; color: rgba(255,255,255,.3); }
+  .gm-foot span{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .gm-foot .warn{ color:#e58bd0; }
+
+  .note{ margin-top:20px; font-size:12.5px; color: var(--muted-40); text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="panel">
+    <div class="eyebrow">Website · FeatureRail · feature id "steering"</div>
+    <h1>Three real agent CLIs, running at once — glance, steer, look away</h1>
+    <p style="margin-top:8px; max-width:760px;">
+      Recreated from the actual tools, not an invented chat UI: Claude Code's dark-teal session view, Codex's boxed
+      status header + plan checklist, and Gemini CLI's gradient wordmark + tool-call cards. All three panes render
+      simultaneously — exactly what "look at the one that needs you" means when you have more than one agent seated.
+    </p>
+    <div class="refs">
+      <div class="ref"><img src="assets/claude-demo-frame.png" alt="Claude Code CLI reference screenshot" /><div class="ref-cap">Claude Code — anthropics/claude-code demo.gif</div></div>
+      <div class="ref"><img src="assets/codex-splash.png" alt="Codex CLI reference screenshot" /><div class="ref-cap">Codex — openai/codex splash</div></div>
+      <div class="ref"><img src="assets/gemini-cli.png" alt="Gemini CLI reference screenshot" /><div class="ref-cap">Gemini CLI — google-gemini/gemini-cli screenshot</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="tabbar" id="tabbar"></div>
+    <div class="stage-cap" id="stageCap"></div>
+    <div class="tri" id="triStage"></div>
+    <div class="note">The amber ring is the one that needs you — everything else keeps running in the periphery.</div>
+  </div>
+
+</div>
+
+<script>
+  const SCENARIOS = [
+    { id:"refactor", label:"Refactor",
+      claude: { win:"Refactor Session", task:"extract token logic into TokenService", status:"Typecheck clean — 48 tests passing", done:true, foot:"refactor" },
+      codex:  { win:"ghosttyxr — codex — 119x30", model:"gpt-5.6-sol medium", dir:"~/code/ghosttyxr",
+        promptTask:"Run the auth tests before you commit.",
+        bullet:["Two call sites used the old ",{hl:"refresh flow"},", I adapted them and left a note."],
+        plan:["Extract TokenService from the auth module","Update 14 call sites","Run type checker + auth suite"],
+        steer:"commit it" },
+      gemini: { task:"@auth Write a migration note for the TokenService extraction", model:"gemini-3.6-flash",
+        bullet:["Drafted a short migration note and linked it in the ",{hl:"PR description"},"."],
+        tool:{name:"WriteFile", desc:"Writing to docs/migrations/token-service.md"}, code:'"Public API unchanged."',
+        status:"Awaiting your next command or request." } },
+    { id:"tests", label:"Tests",
+      claude: { win:"Coverage Session", task:"raise coverage on the parser", status:"Writing parser_escape_test.ts (esc to interrupt)", done:false, foot:"tests" },
+      codex:  { win:"ghosttyxr — codex — 119x30", model:"gpt-5.6-sol medium", dir:"~/code/ghosttyxr",
+        promptTask:"Fix the tab-stop bug, keep the new tests.",
+        bullet:["10 of 12 new tests passed — the ",{hl:"tab-stop edge case"}," looks like a real bug."],
+        plan:["Add escape-sequence + malformed-input cases","Isolate the failing tab-stop case","Patch tabstops.ts and re-run"],
+        steer:"ship it once green" },
+      gemini: { task:"@parser Summarize today's coverage delta", model:"gemini-3.6-flash",
+        bullet:["Coverage on the parser moved from 61% to ",{hl:"84%"}," after the fix."],
+        tool:{name:"RunTests", desc:"npm test parser -q"}, code:"12 passed in 0.8s",
+        status:"Awaiting your next command or request." } },
+    { id:"build", label:"Build",
+      claude: { win:"Build Watch", task:"watch the release build and flag failures", status:"Idle — last build succeeded (3m 41s)", done:true, foot:"build" },
+      codex:  { win:"ghosttyxr — codex — 119x30", model:"gpt-5.6-sol medium", dir:"~/code/ghosttyxr",
+        promptTask:"Install the release build on the headset once it's done.",
+        bullet:["BUILD SUCCESSFUL in 3m 41s — APK is ",{hl:"41MB"},"."],
+        plan:["./gradlew assembleRelease","Package APK","adb install on Galaxy XR"],
+        steer:"install it" },
+      gemini: { task:"@play Draft the internal-track release notes", model:"gemini-3.6-flash",
+        bullet:["Release notes drafted from the last ",{hl:"6 commits"},"."],
+        tool:{name:"WriteFile", desc:"Writing to RELEASE_NOTES.md"}, code:'"fix(session): silence tmux bootstrap noise"',
+        status:"Awaiting your next command or request." } },
+    { id:"debug", label:"Debug",
+      claude: { win:"Repro Session", task:"reproduce the paste freeze with a 2MB buffer", status:"Profiling render loop (esc to interrupt)", done:false, foot:"debug" },
+      codex:  { win:"ghosttyxr — codex — 119x30", model:"gpt-5.6-sol medium", dir:"~/code/ghosttyxr",
+        promptTask:"Move the parser off the main thread.",
+        bullet:["Found it — the parser drains the channel on the ",{hl:"main thread"}," past 256KB."],
+        plan:["Reproduce with a 2MB paste","Profile the render loop","Move parsing to a coroutine with backpressure"],
+        steer:"ship the fix" },
+      gemini: { task:"@logs Check logcat for related OOM warnings", model:"gemini-3.6-flash",
+        bullet:["No OOM warnings — this was a ",{hl:"threading issue"},", not memory."],
+        tool:{name:"Shell", desc:"adb logcat | grep Terminal"}, code:"I/Terminal: paste buffer 2.1MB",
+        status:"Awaiting your next command or request." } },
+    { id:"migration", label:"Migration",
+      claude: { win:"Backfill Session", task:"verify checksums after the SQLite backfill", status:"1,842 / 1,842 records verified", done:true, foot:"migration" },
+      codex:  { win:"ghosttyxr — codex — 119x30", model:"gpt-5.6-sol medium", dir:"~/code/ghosttyxr",
+        promptTask:"Flip the sqlite_reads flag.",
+        bullet:["Reads are on SQLite behind a flag — ",{hl:"JSON fallback"}," stays until you flip it."],
+        plan:["Create schema","Backfill 1,842 records","Swap the read path behind a flag"],
+        steer:"flip it" },
+      gemini: { task:"@config Benchmark read latency before/after", model:"gemini-3.6-flash",
+        bullet:["Config reads dropped from 12ms to ",{hl:"3ms"}," after the flip."],
+        tool:{name:"Shell", desc:"export FLAG_sqlite_reads=1"}, code:"reads: 12ms -> 3ms",
+        status:"Awaiting your next command or request." } },
+  ];
+
+  function richText(parts){
+    return parts.map(p => typeof p === "string" ? p : `<span class="hl">${p.hl}</span>`).join("");
+  }
+
+  function claudePane(s){
+    const c = s.claude;
+    return `
+    <div class="win">
+      <div class="titlebar"><span class="tlights"><span class="r"></span><span class="y"></span><span class="g"></span></span><span class="wtitle"><span class="ic">✳</span>${c.win}</span></div>
+      <div class="cc-body">
+        <div class="cc-head">
+          <svg class="cc-mascot" viewBox="0 0 10 8" width="44" height="36">
+            <g fill="#e8927c">
+              <rect x="1" y="0" width="8" height="1"/><rect x="0" y="1" width="10" height="4"/>
+              <rect x="1" y="5" width="1" height="2"/><rect x="3" y="5" width="1" height="2"/>
+              <rect x="6" y="5" width="1" height="2"/><rect x="8" y="5" width="1" height="2"/>
+            </g>
+            <g fill="#0b1f1c"><rect x="2.4" y="2" width="1.2" height="1.4"/><rect x="6.4" y="2" width="1.2" height="1.4"/></g>
+          </svg>
+          <div>
+            <div class="cc-title">Claude Code</div>
+            <div class="cc-sub">Fable 5 · Claude Enterprise</div>
+            <div class="cc-path">~/repos/ghostty-vibe-xr</div>
+          </div>
+        </div>
+        <div class="cc-hr"></div>
+        <div class="cc-prompt"><span class="p">&gt;</span>${c.task}</div>
+        <div class="cc-status ${c.done ? 'done' : 'live'}"><span class="dot"></span>${c.done ? '✓ ' : '· '}${c.status}</div>
+        <div class="cc-foot"><span>demo (<b>${c.foot}</b>)</span><span>Thinking on (tab to toggle)</span></div>
+      </div>
+    </div>`;
+  }
+
+  function codexPane(s){
+    const c = s.codex;
+    return `
+    <div class="win needs">
+      <div class="titlebar"><span class="tlights"><span class="r"></span><span class="y"></span><span class="g"></span></span><span class="wtitle"><span class="ic">📁</span>${c.win}</span><span class="needs-flag"><span class="dot"></span>needs input</span></div>
+      <div class="cx-body">
+        <div class="cx-box">
+          <div class="hdr">&gt;_ OpenAI Codex <span style="color:rgba(255,255,255,.35); font-weight:400;">(v0.0.0)</span></div>
+          <div class="row"><span class="key">model:</span><span class="val">${c.model}</span><span class="link">/model to change</span></div>
+          <div class="row"><span class="key">directory:</span><span class="val">${c.dir}</span></div>
+        </div>
+        <div class="cx-tip">Tip: Use /feedback to send logs to the maintainers when something looks off.</div>
+        <div class="cx-prompt"><span class="p">&gt;</span>${c.promptTask}</div>
+        <div class="cx-bullet">${richText(c.bullet)}</div>
+        <div class="cx-plan-title">Updated Plan</div>
+        <div class="cx-plan">
+          ${c.plan.map(item => `<div class="cx-plan-item"><span class="tree">☐</span>${item}</div>`).join("")}
+        </div>
+        <div class="cx-steer"><span class="p">▸</span><span class="txt">${c.steer}</span><span class="cursor" style="color:#fff;"></span></div>
+      </div>
+    </div>`;
+  }
+
+  function geminiPane(s){
+    const c = s.gemini;
+    return `
+    <div class="win">
+      <div class="titlebar"><span class="tlights"><span class="r"></span><span class="y"></span><span class="g"></span></span><span class="wtitle">gemini — zsh — 100×32</span></div>
+      <div class="gm-body">
+        <div class="gm-logo">✦ GEMINI</div>
+        <div class="gm-prompt">&gt; ${c.task}</div>
+        <div class="gm-model">Responding with ${c.model}</div>
+        <div class="gm-bullet"><span class="star">✦</span>${richText(c.bullet)}</div>
+        <div class="gm-tool">
+          <div class="t"><span class="ck">✓</span><b>${c.tool.name}</b> ${c.tool.desc}</div>
+          <div class="code">${c.code}</div>
+        </div>
+        <div class="gm-status"><span class="star">✦</span>${c.status}</div>
+        <div class="gm-input">&gt; Type your message or @path/to/file</div>
+        <div class="gm-foot"><span>~/ghosttyxr</span><span class="warn">no sandbox (see /docs)</span></div>
+      </div>
+    </div>`;
+  }
+
+  function render(id){
+    const s = SCENARIOS.find(x => x.id === id) || SCENARIOS[0];
+    document.getElementById("triStage").innerHTML = claudePane(s) + codexPane(s) + geminiPane(s);
+    document.getElementById("stageCap").innerHTML = `<b>claude</b> is idle, <b>gemini</b> is still working, and <b>codex</b> is the one waiting on you — type <b>"${s.codex.steer}"</b> and look away again.`;
+  }
+
+  function buildTabs(){
+    const bar = document.getElementById("tabbar");
+    bar.innerHTML = SCENARIOS.map((s, i) => `<button data-id="${s.id}" class="${i===0?'active':''}">${s.label}</button>`).join("");
+    bar.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        bar.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        render(btn.dataset.id);
+      });
+    });
+  }
+
+  buildTabs();
+  render(SCENARIOS[0].id);
+</script>
+</body>
+</html>
